@@ -4,7 +4,7 @@ A daily accountability system a Google Apps Script web app backed by Google Shee
 
 I built it for myself and I use it every day. This repository is a sanitised snapshot: the mechanism in full, with my own content replaced by neutral examples.
 
-> **Why it exists.** Long-horizon goals  a certification, a career change — pay nothing tonight. Short-horizon alternatives pay immediately, which is why they win. The design goal was a scoreboard that pays for effort *today*, including a reduced "floor" version that still pays on a bad day. Every counter in the app is cumulative and none of them reset when you miss.
+> **Why it exists.** Long-horizon goals  a certification, a career change pay nothing tonight. Short-horizon alternatives pay immediately, which is why they win. The design goal was a scoreboard that pays for effort *today*, including a reduced "floor" version that still pays on a bad day. Every counter in the app is cumulative and none of them reset when you miss.
 
 ---
 
