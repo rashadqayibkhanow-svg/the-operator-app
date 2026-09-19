@@ -6,6 +6,19 @@ I built it for myself and I use it every day. This repository is a sanitised sna
 
 > **Why it exists.** Long-horizon goals  a certification, a career change pay nothing tonight. Short-horizon alternatives pay immediately, which is why they win. The design goal was a scoreboard that pays for effort *today*, including a reduced "floor" version that still pays on a bad day. Every counter in the app is cumulative and none of them reset when you miss.
 
+<table>
+  <tr>
+    <td width="33%"><img src="screenshots/morning.png" alt="Morning tab — boot sequence and the day's exercise session"></td>
+    <td width="33%"><img src="screenshots/engine.png" alt="Engine tab — commitments and the deep-work session form"></td>
+    <td width="33%"><img src="screenshots/score.png" alt="Score tab — cumulative counters and personal bests"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Morning</b> — the boot sequence, and an exercise session the app picks for you</sub></td>
+    <td align="center"><sub><b>Engine</b> — the day's commitments and the deep-work session record</sub></td>
+    <td align="center"><sub><b>Score</b> — cumulative counters; none of them reset on a missed day</sub></td>
+  </tr>
+</table>
+
 ---
 
 ## What it does
@@ -18,6 +31,22 @@ I built it for myself and I use it every day. This repository is a sanitised sna
 | **Scoreboard** | Six cumulative counters plus personal bests. Nothing here can go down. |
 | **Weekly metrics** | Three "it's working" and three "it's breaking" signals computed from the log, plus a performance-gated progression ladder that advances on evidence rather than on the calendar. |
 | **Reminders** | Two time-driven emails; the evening one suppresses itself if the day is already closed out. |
+
+<table>
+  <tr>
+    <td width="42%"><img src="screenshots/firewall.png" alt="Firewall tab — failure protocol and the progression ladder"></td>
+    <td valign="top">
+      <br>
+      <b>Failure is a state the system has a plan for, not an exception.</b>
+      <br><br>
+      The protocol reads the log and reports how many consecutive weekdays have been missed, then prescribes the response: one miss is a data point, two in a row is the only real failure, three or more triggers a week at the reduced floor. The instruction it shows is always <i>execute something smaller</i> — never <i>redesign the system</i>, which is the failure mode it exists to prevent.
+      <br><br>
+      Below it, the progression ladder advances only when a performance gate computed from the log is met. It shows the evidence it is judging against, and it stays locked when the gate is not met. There is no way to advance it by hand.
+      <br><br>
+      <sub>This screenshot is real state, not a mock — two missed weekdays, gate not met.</sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -58,6 +87,20 @@ The log answered it precisely. "Where I stopped" and tomorrow's first task were 
 The result was a subtraction, not a feature: six tabs to five, one evening pass with one save, tomorrow's first line seeded from where today stopped, and the checklist rebuilt to derive itself. No sheet column was added, removed or moved.
 
 The habit I took from it: when a tool feels wrong, measure how it's actually used before changing it. The instinct to redesign is usually stronger than the evidence for it.
+
+<table>
+  <tr>
+    <td valign="top">
+      <br>
+      <b>What it became.</b> One pass, top to bottom, one save.
+      <br><br>
+      The three commitments are marked in the same place they're reviewed. The root-cause box is only relevant when something was missed. Tomorrow's first line is seeded from where today stopped, because that was being retyped by hand every night.
+      <br><br>
+      The shutdown checklist underneath is the part I'd point at: four of its five items aren't tappable. They derive from whether the work they describe is actually present, so the list shows what's still <i>missing</i> rather than what you're willing to tick. The one remaining tap is for something the app genuinely can't observe.
+    </td>
+    <td width="42%"><img src="screenshots/evening.png" alt="Evening tab — one pass with a self-filling shutdown checklist"></td>
+  </tr>
+</table>
 
 ---
 
