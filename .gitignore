@@ -1,0 +1,7 @@
+# clasp: holds your own script id
+.clasp.json
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

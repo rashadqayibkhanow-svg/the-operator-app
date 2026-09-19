@@ -1,0 +1,4341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-title" content="Operator">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>THE OPERATOR</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+body {
+  background:#0d1117; color:#e6edf3;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:18px;
+  min-height:100vh;
+  min-height:100dvh;          /* iOS: avoids the jump as the URL bar collapses */
+  /* space for fixed bottom tab bar + home indicator */
+  padding-bottom:calc(72px + env(safe-area-inset-bottom));
+  overscroll-behavior-y:none;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Chrome shouldn't be long-press selectable — that callout is the single
+   biggest "this is a web page" tell on iOS. Real content stays selectable. */
+header, .tabs, .sidebar, .block-title, .field-label, .field-hint,
+.status-btn, .seg-btn, .track-pill, .pillar-pill,
+.fw-btn, .save-btn, .reset-btn, .export-btn, .backlog-btn, .backlog-del,
+.hardest-btn, .phase-badge, .check-item, .log-card-header, .pillar-header,
+.mve-header, .esc-change-btn, .rung-tag, .streak-display, .weekly-rate-wrap {
+  -webkit-user-select:none; user-select:none;
+}
+textarea, input, .log-text-block, .pillar-body, .declaration,
+.script-card p, .rung-desc, .fw-table td, .mve-step, .fp-step {
+  -webkit-user-select:text; user-select:text;
+}
+
+header {
+  background:#0d1117; border-bottom:2px solid #e8375a;
+  padding: calc(14px + env(safe-area-inset-top)) 20px 12px;
+  position:sticky; top:0; z-index:100;
+}
+header h1 { font-size:14px; letter-spacing:3px; color:#e8375a; text-transform:uppercase; margin-bottom:3px; }
+header h2 { font-size:30px; font-weight:800; letter-spacing:1px; }
+#section-title { font-size:26px; font-weight:800; letter-spacing:-0.4px; line-height:1.15; }
+#date-display { font-size:16px; color:#8b949e; margin-top:5px; }
+
+/* BOTTOM TAB BAR */
+.tabs {
+  display:flex; background:#161b22;
+  border-top:1px solid #21262d;
+  position:fixed; bottom:0; left:0; right:0; z-index:200;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.tab {
+  flex:1; padding:10px 4px 8px; text-align:center;
+  font-size:12px; font-weight:600; letter-spacing:0.5px;
+  color:#8b949e; cursor:pointer;
+  border-top:2px solid transparent;
+  transition:color 0.15s;
+  text-transform:uppercase; min-height:60px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+}
+.tab .tab-icon { font-size:26px; line-height:1; }
+.tab.active { color:#e8375a; border-top-color:#e8375a; }
+.tab:active  { background:#1e242c; }
+
+/* SECTIONS */
+.section {
+  display:none; padding:16px 16px 20px;
+  -webkit-overflow-scrolling:touch;
+}
+.section.active { display:block; }
+
+.block {
+  background:#161b22; border:1px solid #21262d;
+  border-radius:12px; padding:20px; margin-bottom:18px;
+}
+.block-title {
+  font-size:14px; letter-spacing:2px; color:#e8375a;
+  text-transform:uppercase; margin-bottom:16px; font-weight:700;
+}
+
+/* CHECKLIST */
+.check-item {
+  display:flex; align-items:flex-start; gap:16px;
+  padding:16px 0; border-bottom:1px solid #21262d; cursor:pointer;
+  min-height:56px;
+}
+.check-item:last-child { border-bottom:none; }
+.check-item input[type="checkbox"] { display:none; }
+.check-box {
+  width:30px; height:30px; border:2px solid #30363d; border-radius:7px;
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  transition:all 0.15s; margin-top:2px;
+}
+.check-item.checked .check-box { background:#e8375a; border-color:#e8375a; }
+.check-item.checked .check-box::after { content:'\2713'; color:white; font-size:16px; font-weight:700; }
+.check-item.checked .check-text { color:#8b949e; text-decoration:line-through; }
+.check-item:active .check-box { opacity:0.7; }
+.check-text { font-size:19px; line-height:1.55; color:#c9d1d9; }
+
+/* COMMITMENT TRACKER */
+.commitment-row {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 0; border-bottom:1px solid #21262d; min-height:56px;
+}
+.commitment-row:last-child { border-bottom:none; }
+.commitment-name {
+  flex:1; font-size:18px; color:#c9d1d9;
+  background:none; border:none; outline:none; caret-color:#e8375a;
+  -webkit-appearance:none;
+}
+.commitment-name::placeholder { color:#8b949e; }
+.status-btns { display:flex; gap:8px; }
+.status-btn {
+  width:52px; height:48px; border-radius:10px; border:1px solid #30363d;
+  background:none; color:#8b949e; font-size:16px; font-weight:700;
+  cursor:pointer; transition:all 0.15s; -webkit-appearance:none;
+}
+.status-btn:active { transform:scale(0.93); }
+.status-btn.active-done { background:#1a7f37; border-color:#1a7f37; color:white; }
+.status-btn.active-min  { background:#9a6700; border-color:#9a6700; color:white; }
+.status-btn.active-miss { background:#8c1c2a; border-color:#8c1c2a; color:white; }
+
+/* TEXTAREA — 16px min prevents Safari auto-zoom */
+textarea {
+  width:100%; background:#0d1117; border:1px solid #30363d; border-radius:10px;
+  color:#c9d1d9; font-family:inherit; font-size:18px; line-height:1.7;
+  padding:16px; resize:none; outline:none; caret-color:#e8375a;
+  -webkit-appearance:none; appearance:none;
+}
+textarea:focus { border-color:#e8375a; }
+textarea::placeholder { color:#8b949e; }
+
+/* OVERRIDE SCRIPT */
+.script { font-size:19px; line-height:1.9; color:#c9d1d9; }
+.script .highlight { color:#e8375a; font-weight:700; font-size:20px; }
+
+/* ONE RULE */
+.one-rule {
+  text-align:center; padding:22px; background:#1a0a0d;
+  border:1px solid #e8375a; border-radius:10px; margin-bottom:16px;
+}
+.one-rule p { font-size:15px; letter-spacing:2px; color:#8b949e; text-transform:uppercase; margin-bottom:10px; }
+.one-rule h2 { font-size:28px; font-weight:900; color:#e8375a; letter-spacing:2px; }
+
+/* PILLARS */
+.pillar { background:#161b22; border:1px solid #21262d; border-radius:10px; margin-bottom:12px; overflow:hidden; }
+.pillar-header { display:flex; justify-content:space-between; align-items:center; padding:18px 16px; cursor:pointer; min-height:60px; }
+.pillar-header h3 { font-size:19px; font-weight:600; color:#c9d1d9; flex:1; padding-right:10px; }
+.pillar-num { font-size:13px; letter-spacing:1px; color:#e8375a; font-weight:700; }
+.pillar-arrow { color:#8b949e; font-size:16px; transition:transform 0.2s; }
+.pillar.open .pillar-arrow { transform:rotate(180deg); }
+.pillar-body { display:none; padding:0 16px 20px; border-top:1px solid #21262d; }
+.pillar.open .pillar-body { display:block; }
+.pillar-body p { font-size:17px; color:#8b949e; line-height:1.8; margin-top:14px; font-style:italic; }
+
+/* STREAK */
+.streak-display { text-align:center; padding:16px; }
+.streak-num { font-size:56px; font-weight:900; color:#e8375a; line-height:1; }
+.streak-label { font-size:14px; letter-spacing:2px; color:#8b949e; text-transform:uppercase; margin-top:6px; }
+
+/* BUTTONS */
+.save-btn {
+  width:100%; padding:20px; background:#e8375a; border:none;
+  border-radius:14px; color:white; font-size:19px; font-weight:700;
+  cursor:pointer; letter-spacing:0.3px; -webkit-appearance:none;
+  min-height:62px;
+}
+.save-btn:active { background:#c42d4a; transform:scale(0.98); }
+.save-btn:disabled { background:#484f58; cursor:not-allowed; }
+.reset-btn {
+  width:100%; padding:18px; background:#161b22; border:1px solid #30363d;
+  border-radius:14px; color:#8b949e; font-size:17px; font-weight:600;
+  cursor:pointer; letter-spacing:0.5px; text-transform:uppercase;
+  margin-top:12px; -webkit-appearance:none; min-height:60px;
+}
+.reset-btn:active { background:#21262d; }
+
+/* TOAST */
+#toast {
+  position:fixed; bottom:calc(80px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);
+  background:#1a7f37; color:white; padding:14px 28px; border-radius:20px;
+  font-size:15px; font-weight:600; z-index:9999; letter-spacing:0.5px;
+  opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:normal; text-align:center;
+  max-width:calc(100vw - 32px);
+}
+#toast.show { opacity:1; }
+#toast.error { background:#8c1c2a; }
+#toast.saving { background:#9a6700; }
+
+/* SPINNER */
+.spinner {
+  display:inline-block; width:14px; height:14px;
+  border:2px solid rgba(255,255,255,0.3); border-top-color:white;
+  border-radius:50%; animation:spin 0.7s linear infinite; margin-right:6px;
+  vertical-align:middle;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* LOG TAB */
+.log-toolbar {
+  display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;
+}
+.log-stats { font-size:15px; color:#8b949e; letter-spacing:1px; text-transform:uppercase; }
+.export-btn {
+  padding:12px 20px; background:#161b22; border:1px solid #30363d;
+  border-radius:10px; color:#8b949e; font-size:15px; font-weight:600;
+  cursor:pointer; letter-spacing:0.5px; text-transform:uppercase;
+  -webkit-appearance:none; min-height:48px;
+}
+.export-btn:active { background:#21262d; }
+.log-loading {
+  text-align:center; padding:32px 20px; color:#8b949e;
+  font-size:16px; letter-spacing:1px; text-transform:uppercase;
+}
+#log-empty {
+  text-align:center; padding:40px 20px; color:#8b949e;
+}
+
+/* LOG CARDS */
+.log-card {
+  background:#161b22; border:1px solid #21262d;
+  border-radius:10px; margin-bottom:10px; overflow:hidden;
+}
+.log-card-header {
+  display:flex; align-items:center; gap:14px;
+  padding:18px 16px; cursor:pointer; user-select:none; min-height:60px;
+}
+.log-card-header:active { background:#1e242c; }
+.log-verdict-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.verdict-full { background:#1a7f37; }
+.verdict-min  { background:#9a6700; }
+.verdict-miss { background:#8c1c2a; }
+.log-date { flex:1; font-size:18px; font-weight:600; color:#c9d1d9; }
+.log-score {
+  font-size:14px; font-weight:700; padding:5px 12px;
+  border-radius:12px; letter-spacing:0.5px;
+}
+.score-full { background:#0d2818; color:#3fb950; border:1px solid #1a7f37; }
+.score-min  { background:#2a1f00; color:#d29922; border:1px solid #9a6700; }
+.score-miss { background:#2a0d11; color:#f85149; border:1px solid #8c1c2a; }
+.log-arrow { color:#8b949e; font-size:16px; transition:transform 0.2s; }
+.log-card.open .log-arrow { transform:rotate(180deg); }
+.log-card-body { display:none; border-top:1px solid #21262d; padding:16px 18px; }
+.log-card.open .log-card-body { display:block; }
+
+.log-section-title {
+  font-size:14px; letter-spacing:2px; color:#e8375a; text-transform:uppercase;
+  font-weight:700; margin:18px 0 10px;
+}
+.log-section-title:first-child { margin-top:0; }
+.log-check-row { display:flex; align-items:center; gap:12px; padding:8px 0; font-size:16px; color:#8b949e; }
+.log-check-row .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.dot-done { background:#1a7f37; }
+.dot-miss { background:#30363d; }
+.log-commitment-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0; border-bottom:1px solid #21262d; font-size:16px;
+}
+.log-commitment-row:last-child { border-bottom:none; }
+.log-commitment-name { color:#8b949e; flex:1; }
+.log-status-badge { font-size:14px; font-weight:700; padding:4px 10px; border-radius:4px; letter-spacing:0.5px; }
+.badge-d { background:#0d2818; color:#3fb950; }
+.badge-m { background:#2a1f00; color:#d29922; }
+.badge-x { background:#2a0d11; color:#f85149; }
+.badge-  { background:#161b22; color:#8b949e; }
+.log-text-block {
+  font-size:16px; color:#c9d1d9; line-height:1.7; background:#0d1117;
+  border-radius:6px; padding:14px 16px; white-space:pre-wrap; word-break:break-word;
+}
+.log-text-empty { font-size:16px; color:#8b949e; font-style:italic; padding:4px 0; }
+.log-delete-btn {
+  margin-top:16px; width:100%; padding:16px; background:none; border:1px solid #30363d;
+  border-radius:10px; color:#8b949e; font-size:16px; cursor:pointer;
+  letter-spacing:0.5px; text-transform:uppercase; -webkit-appearance:none; min-height:54px;
+}
+.log-delete-btn:active { border-color:#8c1c2a; color:#f85149; }
+
+/* ENGINE STATUS */
+.engine-status-row {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;
+}
+.phase-badge {
+  background:#1a0a0d; border:1px solid #e8375a; border-radius:10px;
+  padding:10px 16px; font-size:13px; font-weight:700; color:#e8375a;
+  letter-spacing:1px; cursor:pointer; text-transform:uppercase;
+  -webkit-appearance:none; line-height:1.3;
+}
+.phase-badge:active { background:#2a0d11; }
+.phase-sub { font-size:12px; font-weight:400; letter-spacing:0.5px; color:#8b949e; display:block; margin-top:2px; }
+.weekly-rate-wrap { text-align:right; }
+.weekly-rate-num { font-size:32px; font-weight:900; color:#e6edf3; line-height:1; }
+.weekly-rate-pct { font-size:18px; color:#8b949e; font-weight:400; }
+.weekly-rate-label { font-size:12px; color:#8b949e; letter-spacing:1px; text-transform:uppercase; margin-top:3px; }
+.weekly-rate-bar { height:4px; background:#21262d; border-radius:2px; margin-top:8px; }
+.weekly-rate-fill { height:100%; border-radius:2px; background:#e8375a; transition:width 0.4s; }
+
+/* COMMIT BLOCKS */
+.commit-block {
+  padding:16px 0; border-bottom:1px solid #21262d;
+}
+.commit-block:last-child { border-bottom:none; padding-bottom:0; }
+.commit-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.hardest-btn {
+  background:none; border:none; font-size:24px; cursor:pointer;
+  padding:0; line-height:1; flex-shrink:0; min-width:44px; min-height:44px;
+  opacity:0.4; transition:opacity 0.15s;
+}
+.hardest-btn.active { opacity:1; }
+.commit-name-input {
+  flex:1; font-size:18px; color:#c9d1d9;
+  background:none; border:none; outline:none; caret-color:#e8375a;
+  -webkit-appearance:none; font-family:inherit;
+}
+.commit-name-input::placeholder { color:#8b949e; }
+
+/* MVE BLOCK */
+.mve-block { cursor:pointer; user-select:none; }
+.mve-header { display:flex; justify-content:space-between; align-items:center; }
+.mve-arrow { color:#8b949e; font-size:16px; transition:transform 0.2s; flex-shrink:0; }
+.mve-block.open .mve-arrow { transform:rotate(180deg); }
+.mve-body { display:none; margin-top:18px; }
+.mve-block.open .mve-body { display:block; }
+.mve-step {
+  display:flex; align-items:flex-start; gap:14px;
+  padding:12px 0; border-bottom:1px solid #21262d; font-size:17px;
+  color:#c9d1d9; line-height:1.5;
+}
+.mve-step:last-of-type { border-bottom:none; }
+.mve-num {
+  background:#e8375a; color:white; border-radius:50%;
+  width:26px; height:26px; display:flex; align-items:center;
+  justify-content:center; font-size:14px; font-weight:700;
+  flex-shrink:0; margin-top:2px;
+}
+.mve-rule {
+  font-size:15px; color:#8b949e; font-style:italic;
+  line-height:1.7; margin-top:14px; padding-top:14px;
+  border-top:1px solid #21262d;
+}
+
+/* ESCALATION LADDER */
+.escalation-top {
+  display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;
+}
+.escalation-level-badge {
+  font-size:22px; font-weight:900; color:#e6edf3; line-height:1; margin-bottom:4px;
+}
+.escalation-level-name {
+  font-size:14px; color:#e8375a; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;
+}
+.escalation-days-label {
+  font-size:14px; color:#8b949e;
+}
+.escalation-dots {
+  display:flex; gap:8px; padding-top:4px;
+}
+.esc-dot {
+  width:14px; height:14px; border-radius:50%; background:#21262d; transition:background 0.2s;
+}
+.esc-dot.active { background:#e8375a; }
+.esc-change-btn {
+  flex:1; padding:13px; background:#161b22; border:1px solid #30363d; border-radius:10px;
+  color:#8b949e; font-size:15px; font-weight:600; cursor:pointer; -webkit-appearance:none;
+  min-height:48px; letter-spacing:0.3px;
+}
+.esc-change-btn.escalate { border-color:#e8375a; color:#e8375a; }
+.esc-change-btn:active { background:#21262d; }
+
+/* FIREWALL LOG */
+.fw-buttons {
+  display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;
+}
+.fw-btn {
+  padding:10px 14px; border-radius:10px; border:1px solid #30363d;
+  background:none; color:#c9d1d9; font-size:15px; font-weight:600;
+  cursor:pointer; -webkit-appearance:none; min-height:44px; transition:background 0.15s;
+}
+.fw-btn:active { background:#21262d; }
+.fw-entry {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 0; border-bottom:1px solid #21262d;
+}
+.fw-entry:last-child { border-bottom:none; }
+.fw-tag {
+  font-size:13px; font-weight:700; padding:3px 9px; border-radius:5px;
+  letter-spacing:0.5px; white-space:nowrap; flex-shrink:0;
+}
+.fw-tag-alarm   { background:#2a1400; color:#e8375a; }
+.fw-tag-phone   { background:#0d1a2a; color:#58a6ff; }
+.fw-tag-redesign{ background:#1a1a00; color:#d29922; }
+.fw-tag-spiral  { background:#2a0d11; color:#f85149; }
+.fw-tag-excuse  { background:#1a001a; color:#bc8cff; }
+.fw-time { font-size:14px; color:#8b949e; flex:1; text-align:right; }
+.fw-clear-btn {
+  width:100%; padding:13px; background:none; border:1px solid #30363d;
+  border-radius:10px; color:#8b949e; font-size:15px; cursor:pointer;
+  -webkit-appearance:none; margin-top:12px; min-height:44px;
+}
+.fw-clear-btn:active { border-color:#8c1c2a; color:#f85149; }
+
+/* 30-DAY CHAIN */
+.chain-grid {
+  display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; margin-bottom:12px;
+}
+.chain-cell {
+  aspect-ratio:1; border-radius:6px; display:flex; align-items:center;
+  justify-content:center; font-size:13px; font-weight:700; color:#8b949e;
+}
+.chain-cell.done  { background:#1a7f37; color:white; }
+.chain-cell.min   { background:#9a6700; color:white; }
+.chain-cell.miss  { background:#2a0d11; color:#f85149; }
+.chain-cell.empty { background:#161b22; border:1px solid #21262d; }
+.chain-cell.today { border:2px solid #e8375a; }
+.chain-legend {
+  display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;
+}
+.chain-legend-item {
+  display:flex; align-items:center; gap:6px; font-size:13px; color:#8b949e;
+}
+.chain-legend-dot {
+  width:10px; height:10px; border-radius:3px;
+}
+.rev-badge {
+  display:inline-block; font-size:12px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; color:#d29922; background:#2a1f00;
+  border-radius:4px; padding:2px 6px; margin-right:8px; vertical-align:1px;
+}
+
+/* -- MODULE ITEM MENU ------------------------------------ */
+.cur-items {
+  margin-top:12px; padding:12px; border-radius:10px;
+  background:#0d1117; border:1px solid #21262d;
+}
+.mod-count {
+  font-size:12px; letter-spacing:1px; text-transform:uppercase;
+  color:#8b949e; font-weight:700; margin:4px 0 8px;
+}
+.mod-item {
+  display:flex; align-items:baseline; gap:9px;
+  padding:8px 0; font-size:15px; line-height:1.4; color:#8b949e;
+  border-bottom:1px solid #161b22;
+}
+.mod-item:last-child { border-bottom:none; }
+.mod-kind {
+  font-size:12px; letter-spacing:0.5px; text-transform:uppercase; font-weight:700;
+  padding:2px 6px; border-radius:4px; flex-shrink:0; min-width:38px; text-align:center;
+}
+.k-v { background:#0d1a2a; color:#58a6ff; }
+.k-r { background:#1a1a00; color:#d29922; }
+.k-a { background:#2a0d11; color:#f85149; }
+.k-x { background:#161b22; color:#8b949e; }
+.mod-title { flex:1; color:#c9d1d9; }
+.mod-min { color:#8b949e; font-size:13px; flex-shrink:0; }
+
+.floor-pick {
+  background:#2a1f00; border:1px solid #9a6700; border-radius:9px;
+  padding:11px 13px; margin-bottom:12px;
+}
+.floor-pick-label {
+  font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
+  color:#d29922; font-weight:700; margin-bottom:7px;
+}
+.floor-item {
+  display:flex; justify-content:space-between; gap:10px;
+  font-size:15px; color:#e6edf3; padding:4px 0; line-height:1.4;
+}
+.floor-min { color:#d29922; font-weight:700; flex-shrink:0; }
+
+/* ── SCOREBOARD ─────────────────────────────── */
+.score-grid {
+  display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;
+}
+.score-tile {
+  background:#0d1117; border:1px solid #21262d; border-radius:12px;
+  padding:16px 14px; text-align:center;
+}
+.score-num {
+  font-size:34px; font-weight:900; line-height:1; color:#e6edf3;
+}
+.score-num .score-of { font-size:16px; font-weight:400; color:#8b949e; }
+.score-label {
+  font-size:13px; letter-spacing:1px; text-transform:uppercase;
+  color:#8b949e; margin-top:6px; line-height:1.35;
+}
+.score-tile.lead .score-num { color:#e8375a; }
+.score-tile.wide { grid-column:1 / -1; }
+.score-tile.lead { border-color:#e8375a; background:#1a0a0d; }
+.score-note {
+  font-size:14px; color:#8b949e; line-height:1.6; margin-top:14px;
+}
+.score-note em { color:#8b949e; }
+
+.best-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 0; border-bottom:1px solid #21262d;
+}
+.best-row:last-child { border-bottom:none; }
+.best-val {
+  font-size:22px; font-weight:900; color:#3fb950; min-width:52px; text-align:right;
+}
+.best-label { flex:1; font-size:15px; color:#c9d1d9; line-height:1.4; }
+.best-sub { font-size:13px; color:#8b949e; margin-top:2px; }
+
+/* ── CALISTHENICS ───────────────────────────── */
+.calis-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.calis-level-ctl { display:flex; gap:6px; }
+.calis-lvl-btn {
+  width:44px; height:44px; border-radius:8px; border:1px solid #30363d;
+  background:none; color:#8b949e; font-size:16px; cursor:pointer;
+  -webkit-appearance:none; font-family:inherit;
+}
+.calis-lvl-btn:active { background:#21262d; }
+.calis-head { font-size:16px; color:#c9d1d9; margin-bottom:12px; }
+.calis-head strong { color:#e8375a; }
+.calis-done-tag {
+  font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  color:#3fb950; background:#0d2818; border-radius:4px; padding:2px 7px; margin-left:6px;
+}
+.calis-warm, .calis-floor {
+  font-size:14px; color:#8b949e; line-height:1.5;
+  padding:9px 11px; background:#0d1117; border-radius:8px; margin-bottom:10px;
+}
+.calis-floor { border-left:3px solid #9a6700; margin-top:10px; margin-bottom:0; }
+.calis-warm strong, .calis-floor strong { color:#c9d1d9; }
+.calis-ex {
+  display:flex; align-items:flex-start; gap:11px;
+  padding:10px 0; border-bottom:1px solid #21262d;
+  font-size:16px; color:#c9d1d9; line-height:1.5;
+}
+.calis-ex:last-of-type { border-bottom:none; }
+.calis-n {
+  background:#e8375a; color:#fff; border-radius:50%;
+  width:24px; height:24px; flex-shrink:0; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700;
+}
+.calis-actions { display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+.calis-btn {
+  flex:1 1 auto; min-width:96px; padding:13px 10px; border-radius:11px;
+  border:1px solid #30363d; background:none; color:#8b949e;
+  font-size:15px; font-weight:700; cursor:pointer; -webkit-appearance:none;
+  min-height:50px; font-family:inherit;
+}
+.calis-btn.primary { border-color:#e8375a; color:#e8375a; }
+.calis-btn.floor   { border-color:#9a6700; color:#d29922; }
+.calis-btn:active  { background:#21262d; }
+.calis-btn:disabled { opacity:0.5; }
+.calis-msg { font-size:14px; color:#8b949e; text-align:center; margin-top:9px; }
+
+/* ── EVENING: computed shutdown checks, read-only commitments ── */
+.check-item.auto { cursor:default; }
+.check-item.auto .check-box { border-style:dashed; }
+.check-item.auto.checked .check-box { border-style:solid; }
+.ev-commit-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 0; border-bottom:1px solid #21262d;
+}
+.ev-commit-row:last-child { border-bottom:none; }
+.ev-commit-name { flex:1; font-size:17px; color:#c9d1d9; line-height:1.4; }
+.ev-commit-name.empty { color:#8b949e; font-style:italic; }
+.prefill-hint { font-size:14px; color:#8b949e; margin-top:8px; line-height:1.5; }
+
+/* ── MORNING: today's task, read from commitment #1 ── */
+.task-display {
+  font-size:18px; color:#c9d1d9; line-height:1.5; padding:14px 16px;
+  background:#0d1117; border-radius:10px; border-left:3px solid #e8375a;
+}
+.task-display.empty { color:#8b949e; font-style:italic; border-left-color:#30363d; }
+
+/* ── CURRICULUM ─────────────────────────────── */
+.cur-track-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.cur-progress {
+  font-size:15px; color:#c9d1d9; font-weight:600; margin-bottom:8px;
+}
+.cur-progress .cur-sub { color:#8b949e; font-weight:400; }
+
+.cur-item {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:12px 0; border-bottom:1px solid #21262d;
+}
+.cur-item:last-child { border-bottom:none; }
+.cur-box {
+  width:28px; height:28px; border:2px solid #30363d; border-radius:6px;
+  flex-shrink:0; margin-top:2px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+}
+.cur-item.done .cur-box { background:#1a7f37; border-color:#1a7f37; }
+.cur-item.done .cur-box::after { content:'\2713'; color:#fff; font-size:14px; font-weight:700; }
+.cur-body { flex:1; min-width:0; }
+.cur-name { font-size:16px; color:#c9d1d9; line-height:1.45; }
+.cur-item.done .cur-name { color:#8b949e; text-decoration:line-through; }
+.cur-meta { font-size:13px; color:#8b949e; margin-top:3px; line-height:1.4; }
+.cur-actions { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+.cur-btn {
+  padding:9px 14px; border-radius:8px; border:1px solid #30363d;
+  background:none; color:#8b949e; font-size:14px; font-weight:600;
+  cursor:pointer; -webkit-appearance:none; font-family:inherit; min-height:44px;
+}
+.cur-btn.primary { border-color:#e8375a; color:#e8375a; }
+.cur-btn:active { background:#21262d; }
+
+.cur-toggle {
+  width:100%; margin-top:14px; padding:11px; border-radius:10px;
+  border:1px solid #30363d; background:none; color:#8b949e;
+  font-size:15px; font-weight:600; cursor:pointer; -webkit-appearance:none;
+  min-height:44px; font-family:inherit;
+}
+.cur-toggle:active { background:#21262d; }
+
+.cur-group {
+  font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:#e8375a;
+  font-weight:700; margin:18px 0 4px; padding-top:12px; border-top:1px solid #21262d;
+}
+.cur-group:first-child { border-top:none; padding-top:0; margin-top:8px; }
+.cur-chapter { font-size:14px; color:#8b949e; font-weight:600; margin:10px 0 2px; }
+
+/* ── STALE COMMITMENT BANNER ─────────────────────────── */
+.stale-banner {
+  background:#2a1f00; border:1px solid #9a6700; border-radius:10px;
+  padding:14px 16px; margin-bottom:16px;
+}
+.stale-text { font-size:15px; color:#d29922; line-height:1.6; }
+.stale-text strong { color:#e6edf3; }
+.stale-list { margin-top:8px; color:#8b949e; font-size:14px; line-height:1.5; }
+.stale-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.stale-btn {
+  flex:1 1 auto; min-width:132px; padding:11px 12px; border-radius:9px;
+  border:1px solid #30363d; background:none; color:#8b949e;
+  font-size:15px; font-weight:600; cursor:pointer; -webkit-appearance:none;
+  min-height:44px; font-family:inherit;
+}
+.stale-btn.primary { border-color:#9a6700; color:#d29922; }
+.stale-btn:active { background:#21262d; }
+
+/* ── FORM FIELDS (deep-work session) ─────────────────── */
+.field-label {
+  font-size:14px; letter-spacing:1px; color:#8b949e; text-transform:uppercase;
+  font-weight:700; margin:18px 0 8px;
+}
+.field-label:first-child { margin-top:0; }
+.field-label.required { color:#e8375a; }
+.req-mark { font-size:13px; letter-spacing:0.5px; color:#8b949e; font-weight:400; text-transform:none; margin-left:6px; }
+.field-hint { font-size:14px; color:#8b949e; line-height:1.5; margin-top:8px; font-style:italic; }
+
+/* Segmented button rows */
+.seg-row { display:flex; gap:8px; flex-wrap:wrap; }
+.seg-btn {
+  flex:1 1 auto; min-width:88px; padding:12px 10px; border-radius:10px;
+  border:1px solid #30363d; background:none; color:#8b949e;
+  font-size:15px; font-weight:600; cursor:pointer; -webkit-appearance:none;
+  min-height:46px; transition:all 0.15s; font-family:inherit;
+}
+.seg-btn:active { opacity:0.7; }
+.seg-btn.active { background:#1a0a0d; border-color:#e8375a; color:#e8375a; }
+.seg-btn.active[data-val="full"],
+.seg-btn.active[data-val="used"]       { background:#0d2818; border-color:#1a7f37; color:#3fb950; }
+.seg-btn.active[data-val="relocated"],
+.seg-btn.active[data-val="floor"]      { background:#2a1f00; border-color:#9a6700; color:#d29922; }
+.seg-btn.active[data-val="skipped"],
+.seg-btn.active[data-val="escaped"]    { background:#2a0d11; border-color:#8c1c2a; color:#f85149; }
+
+/* Track + pillar pills */
+.track-pills, .pillar-pills { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.track-pill, .pillar-pill {
+  padding:9px 14px; border:1px solid #30363d; border-radius:20px;
+  background:none; color:#8b949e; font-size:15px; font-weight:600;
+  cursor:pointer; -webkit-appearance:none; transition:all 0.15s;
+  font-family:inherit; min-height:42px;
+}
+.track-pill.active, .pillar-pill.active { background:#1a0a0d; border-color:#e8375a; color:#e8375a; }
+.track-pill:active, .pillar-pill:active { opacity:0.7; }
+
+/* ── SKILLS BACKLOG ──────────────────────────────────── */
+.backlog-add { display:flex; gap:8px; margin-bottom:12px; }
+.backlog-input {
+  flex:1; background:#0d1117; border:1px solid #30363d; border-radius:10px;
+  color:#c9d1d9; font-family:inherit; font-size:16px; padding:12px 14px;
+  outline:none; caret-color:#e8375a; -webkit-appearance:none; min-height:46px;
+}
+.backlog-input:focus { border-color:#e8375a; }
+.backlog-input::placeholder { color:#8b949e; }
+.backlog-btn {
+  padding:12px 18px; background:#161b22; border:1px solid #30363d; border-radius:10px;
+  color:#c9d1d9; font-size:15px; font-weight:600; cursor:pointer;
+  -webkit-appearance:none; min-height:46px; flex-shrink:0; font-family:inherit;
+}
+.backlog-btn:active { background:#21262d; }
+.backlog-entry {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:12px 0; border-bottom:1px solid #21262d; font-size:16px; color:#c9d1d9; line-height:1.5;
+}
+.backlog-entry:last-child { border-bottom:none; }
+.backlog-entry .bl-text { flex:1; }
+.backlog-del {
+  background:none; border:none; color:#8b949e; font-size:22px; cursor:pointer;
+  padding:0; min-width:44px; min-height:44px; line-height:1; flex-shrink:0; -webkit-appearance:none;
+}
+.backlog-del:active { color:#f85149; }
+
+/* ── FAILURE PROTOCOL (L5) ───────────────────────────── */
+.fp-action {
+  font-size:15px; line-height:1.6; color:#c9d1d9; padding:14px;
+  border-radius:10px; background:#0d2818; border:1px solid #1a7f37; margin:14px 0;
+}
+.fp-action.warn   { background:#2a1f00; border-color:#9a6700; }
+.fp-action.danger { background:#2a0d11; border-color:#8c1c2a; }
+.fp-steps { margin-top:6px; }
+.fp-step {
+  font-size:15px; color:#8b949e; line-height:1.6;
+  padding:12px 0; border-bottom:1px solid #21262d;
+}
+.fp-step:last-child { border-bottom:none; }
+.fp-n {
+  display:inline-block; min-width:74px; color:#e8375a;
+  font-weight:700; font-size:14px; letter-spacing:0.5px; text-transform:uppercase;
+}
+
+/* ── EVOLUTION LADDER (L6) ───────────────────────────── */
+.rung-row {
+  padding:14px; border:1px solid #21262d; border-radius:10px;
+  margin-bottom:10px; background:#0d1117;
+}
+.rung-row.current { border-color:#e8375a; background:#1a0a0d; }
+.rung-row.cleared { border-color:#1a7f37; }
+.rung-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.rung-name { font-size:15px; font-weight:700; color:#c9d1d9; flex:1; }
+.rung-tag {
+  font-size:12px; font-weight:700; padding:3px 9px; border-radius:5px;
+  letter-spacing:0.5px; text-transform:uppercase; flex-shrink:0;
+}
+.rung-tag.now     { background:#1a0a0d; color:#e8375a; border:1px solid #e8375a; }
+.rung-tag.cleared { background:#0d2818; color:#3fb950; }
+.rung-tag.locked  { background:#161b22; color:#8b949e; }
+.rung-desc { font-size:15px; color:#8b949e; line-height:1.6; }
+.rung-gate { font-size:14px; color:#8b949e; line-height:1.6; margin-top:8px; font-style:italic; }
+
+/* ── PRETENDER / OPERATOR TABLE ──────────────────────── */
+.fw-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.fw-table { width:100%; border-collapse:collapse; font-size:14px; min-width:520px; }
+.fw-table th {
+  text-align:left; padding:12px 14px; font-size:12px; letter-spacing:1px;
+  text-transform:uppercase; color:#8b949e; background:#0d1117;
+  border-bottom:1px solid #21262d; font-weight:700;
+}
+.fw-table th:first-child { color:#f85149; }
+.fw-table th:last-child  { color:#3fb950; }
+.fw-table td {
+  padding:12px 14px; border-bottom:1px solid #21262d;
+  color:#8b949e; line-height:1.5; vertical-align:top; width:50%;
+}
+.fw-table tr:last-child td { border-bottom:none; }
+.fw-table td:last-child { color:#c9d1d9; }
+
+/* ── EVIDENCE WINDOW ─────────────────────────────────── */
+.chain-day {
+  font-size:14px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  color:#e8375a; margin-bottom:8px;
+}
+.chain-why {
+  font-size:14px; color:#8b949e; line-height:1.6; margin-bottom:14px;
+}
+.chain-why strong { color:#c9d1d9; }
+.chain-why em { color:#8b949e; }
+
+/* ── T14 RISK REGISTER ───────────────────────────────── */
+.risk-verdict p {
+  font-size:15px; color:#8b949e; line-height:1.7; margin-bottom:12px;
+}
+.risk-verdict p:last-child { margin-bottom:0; }
+.risk-verdict strong { color:#c9d1d9; }
+.risk-protect {
+  border-left:3px solid #3fb950; padding-left:14px; margin-top:16px !important;
+}
+.risk-card .pillar-header h3 { font-size:17px; }
+.risk-status {
+  font-size:12px; font-weight:700; padding:3px 8px; border-radius:5px;
+  letter-spacing:0.5px; text-transform:uppercase; flex-shrink:0; margin-right:10px;
+  white-space:nowrap;
+}
+.risk-open    { background:#2a0d11; color:#f85149; }
+.risk-planned { background:#2a1f00; color:#d29922; }
+.risk-root    { background:#1a0a0d; color:#e8375a; border:1px solid #e8375a; }
+.risk-card .pillar-body p { font-style:normal; }
+.risk-card code {
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:13px; background:#0d1117; padding:1px 5px; border-radius:4px; color:#c9d1d9;
+}
+
+/* ── SELF-TALK SCRIPT CARDS ──────────────────────────── */
+.script-card {
+  background:#0d1117; border-left:3px solid #e8375a; border-radius:8px;
+  padding:14px 16px; margin-bottom:12px;
+}
+.script-card:last-child { margin-bottom:0; }
+.script-card-label {
+  font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
+  color:#e8375a; font-weight:700; margin-bottom:8px;
+}
+.script-card p { font-size:16px; line-height:1.7; color:#c9d1d9; font-style:italic; }
+
+/* ── 14-DAY LOCK STATUS ──────────────────────────────── */
+.lock-status {
+  margin-top:14px; padding:12px 14px; border-radius:8px;
+  background:#0d1117; border:1px solid #21262d;
+  font-size:15px; color:#8b949e; line-height:1.5;
+}
+.lock-status.active { border-color:#e8375a; color:#e8375a; font-weight:600; }
+
+/* ── WEEKLY REVIEW (L4) ──────────────────────────────── */
+.weekly-banner {
+  padding:14px; border-radius:10px; background:#0d1117;
+  border:1px solid #21262d; font-size:15px; color:#8b949e; line-height:1.6;
+}
+.weekly-banner.today { background:#1a0a0d; border-color:#e8375a; color:#e6edf3; }
+.l4-metric {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:12px 0; border-bottom:1px solid #21262d; font-size:15px; line-height:1.5;
+}
+.l4-metric:last-child { border-bottom:none; }
+.l4-icon { flex-shrink:0; font-size:16px; width:20px; }
+.l4-text { flex:1; color:#8b949e; }
+.l4-val  { color:#c9d1d9; font-weight:700; flex-shrink:0; }
+.l4-metric.pass .l4-text { color:#c9d1d9; }
+.l4-metric.pass .l4-val  { color:#3fb950; }
+.l4-metric.fail .l4-val  { color:#f85149; }
+.l4-adjust {
+  margin-top:18px; padding:14px; border-radius:10px; background:#0d1117;
+  border:1px solid #21262d; font-size:14px; color:#8b949e; line-height:1.7;
+}
+
+/* Collapsible declarations block reuses the MVE mechanics */
+.pillars-block .mve-body { display:none; margin-top:18px; }
+.pillars-block.open .mve-body { display:block; }
+.pillars-block .mve-header { cursor:pointer; user-select:none; }
+.pillars-block.open .mve-arrow { transform:rotate(180deg); }
+.declaration {
+  padding:12px 0; border-bottom:1px solid #21262d;
+  font-size:16px; line-height:1.6; color:#c9d1d9;
+}
+.declaration:last-child { border-bottom:none; }
+.declaration-name {
+  font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
+  color:#e8375a; font-weight:700; margin-bottom:4px;
+}
+
+/* SECTION GROUP TITLE (between blocks) */
+.section-group-title {
+  font-size:13px; letter-spacing:2px; color:#8b949e; text-transform:uppercase;
+  font-weight:700; margin:6px 0 12px; padding:0 2px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   DESKTOP / WEB LAYOUT
+   Activated by body.desktop-mode (set via JS)
+═══════════════════════════════════════════════════════ */
+
+/* Header layout */
+.header-inner {
+  display:flex; align-items:flex-start; justify-content:space-between;
+}
+.header-titles { flex:1; }
+
+/* Layout toggle button */
+.layout-toggle {
+  background:none; border:1px solid #30363d; border-radius:8px;
+  color:#8b949e; font-size:13px; font-weight:600; padding:7px 13px;
+  cursor:pointer; -webkit-appearance:none;
+  display:flex; align-items:center; gap:7px;
+  white-space:nowrap; flex-shrink:0; margin-top:6px;
+  transition:border-color 0.15s, color 0.15s; letter-spacing:0.3px;
+}
+.layout-toggle:hover { border-color:#e8375a; color:#e8375a; }
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.sidebar {
+  display:none;
+  position:fixed; top:0; left:0; bottom:0; width:200px;
+  background:#0d1117; border-right:1px solid #21262d;
+  z-index:300; flex-direction:column;
+  overflow:hidden;
+}
+.sidebar-brand {
+  padding:20px 18px 16px;
+  border-bottom:2px solid #e8375a;
+  flex-shrink:0;
+}
+.sidebar-brand-sub  { font-size:10px; letter-spacing:3px; color:#e8375a; text-transform:uppercase; margin-bottom:4px; }
+.sidebar-brand-name { font-size:20px; font-weight:800; color:#e6edf3; line-height:1.1; }
+.sidebar-brand-date { font-size:12px; color:#8b949e; margin-top:6px; }
+
+.sidebar-nav { flex:1; padding:8px 0; overflow-y:auto; }
+.sidebar-nav-item {
+  display:flex; align-items:center; gap:14px;
+  padding:16px 20px; cursor:pointer;
+  font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+  color:#8b949e; border-left:3px solid transparent;
+  transition:all 0.15s; user-select:none;
+}
+.sidebar-nav-item:hover  { color:#c9d1d9; background:#161b22; }
+.sidebar-nav-item.active { color:#e8375a; border-left-color:#e8375a; background:#1a0a0d; }
+.sidebar-nav-item:active { background:#21262d; }
+.sidebar-nav-icon { font-size:20px; flex-shrink:0; line-height:1; }
+
+.sidebar-footer {
+  padding:14px 18px; border-top:1px solid #21262d; flex-shrink:0;
+  font-size:11px; color:#8b949e; letter-spacing:0.5px;
+}
+
+/* ── Desktop mode ────────────────────────────────────── */
+body.desktop-mode {
+  font-size:15px;
+  padding-bottom:0 !important;
+}
+body.desktop-mode .sidebar { display:flex; }
+body.desktop-mode .tabs    { display:none !important; }
+
+body.desktop-mode header {
+  margin-left:200px;
+  padding:14px 32px 12px;
+}
+body.desktop-mode .section {
+  margin-left:200px;
+  padding:24px 32px 32px;
+  max-width:1280px;
+}
+
+/* Two-column grid rows */
+body.desktop-mode .desk-row {
+  display:grid;
+  grid-template-columns:3fr 2fr;
+  gap:20px;
+  align-items:start;
+}
+body.desktop-mode .desk-row.equal {
+  grid-template-columns:1fr 1fr;
+}
+body.desktop-mode .desk-row.wide-left {
+  grid-template-columns:3fr 2fr;
+}
+
+/* Desktop toast: bottom-right */
+body.desktop-mode #toast {
+  left:auto; right:24px; transform:none;
+  bottom:calc(24px + 200px * 0);
+}
+
+/* Desktop: slightly more compact blocks */
+body.desktop-mode .block { padding:16px; margin-bottom:14px; }
+body.desktop-mode .check-item { padding:12px 0; min-height:48px; }
+body.desktop-mode .check-text { font-size:16px; }
+body.desktop-mode .save-btn  { min-height:52px; font-size:17px; padding:16px; }
+body.desktop-mode .reset-btn { min-height:48px; font-size:15px; padding:14px; }
+body.desktop-mode textarea   { font-size:16px; padding:12px; }
+body.desktop-mode .commit-name-input { font-size:16px; }
+body.desktop-mode .pillar-header { padding:14px 16px; min-height:52px; }
+body.desktop-mode .pillar-header h3 { font-size:16px; }
+body.desktop-mode header h2 { font-size:26px; }
+
+/* Auto-detect desktop at >= 900px (no manual pref set) */
+@media (min-width:900px) {
+  body:not(.force-mobile):not(.desktop-mode) { font-size:15px; padding-bottom:0 !important; }
+  body:not(.force-mobile):not(.desktop-mode) .sidebar  { display:flex; }
+  body:not(.force-mobile):not(.desktop-mode) .tabs     { display:none !important; }
+  body:not(.force-mobile):not(.desktop-mode) header    { margin-left:200px; padding:14px 32px 12px; }
+  body:not(.force-mobile):not(.desktop-mode) .section  { margin-left:200px; padding:24px 32px 32px; max-width:1280px; }
+  body:not(.force-mobile):not(.desktop-mode) .desk-row { display:grid; grid-template-columns:3fr 2fr; gap:20px; align-items:start; }
+  body:not(.force-mobile):not(.desktop-mode) .desk-row.equal { grid-template-columns:1fr 1fr; }
+  body:not(.force-mobile):not(.desktop-mode) .block    { padding:16px; margin-bottom:14px; }
+  body:not(.force-mobile):not(.desktop-mode) .check-item { padding:12px 0; min-height:48px; }
+  body:not(.force-mobile):not(.desktop-mode) .check-text { font-size:16px; }
+  body:not(.force-mobile):not(.desktop-mode) .save-btn { min-height:52px; font-size:17px; padding:16px; }
+  body:not(.force-mobile):not(.desktop-mode) textarea  { font-size:16px; padding:12px; }
+  body:not(.force-mobile):not(.desktop-mode) .pillar-header { padding:14px 16px; min-height:52px; }
+  body:not(.force-mobile):not(.desktop-mode) .pillar-header h3 { font-size:16px; }
+  body:not(.force-mobile):not(.desktop-mode) header h2 { font-size:26px; }
+  body:not(.force-mobile):not(.desktop-mode) #toast { left:auto; right:24px; transform:none; bottom:24px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS
+   Small-screen refinements for phones < 480px
+═══════════════════════════════════════════════════════ */
+
+@media (max-width:480px) {
+  /* ── Chrome: translucent, iOS-style ─────────────────── */
+  header {
+    padding:calc(8px + env(safe-area-inset-top)) 16px 9px;
+    background:rgba(13,17,23,0.86);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);
+    backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:0.5px solid rgba(232,55,90,0.6);
+  }
+  header h1 { font-size:10px; letter-spacing:2.5px; margin-bottom:1px; }
+  #section-title { font-size:22px; }
+  #date-display { font-size:14px; margin-top:1px; }
+  .layout-toggle { display:none; }
+
+  /* iOS tab bars are ~49pt, icon over a small label, colour-only selection.
+     These rules used to start at 374px, so a 390px iPhone got the cramped
+     desktop-ish bar with clipped uppercase labels. */
+  .tabs {
+    background:rgba(22,27,34,0.88);
+    -webkit-backdrop-filter:saturate(180%) blur(20px);
+    backdrop-filter:saturate(180%) blur(20px);
+    border-top:0.5px solid rgba(255,255,255,0.10);
+    /* GAS serves this page inside an iframe, where env() can resolve to 0 —
+       max() keeps the bar clear of the home indicator either way. */
+    padding-bottom:max(env(safe-area-inset-bottom), 6px);
+  }
+  .tab {
+    min-height:54px; padding:7px 2px 4px; gap:3px;
+    font-size:12px; font-weight:600; letter-spacing:0.1px;
+    text-transform:none; border-top:0;
+  }
+  .tab .tab-icon { font-size:24px; }
+  .tab.active { color:#e8375a; border-top-color:transparent; }
+  body { padding-bottom:calc(62px + max(env(safe-area-inset-bottom), 6px)); }
+
+  /* ── Density ────────────────────────────────────────── */
+  .section { padding:12px 12px 16px; }
+  .block { padding:16px; margin-bottom:12px; border-radius:14px; }
+  .block-title { font-size:14px; margin-bottom:12px; }
+  .section-group-title { font-size:13px; margin:14px 0 10px; }
+
+  .check-item { padding:14px 0; gap:14px; }
+  .check-text { font-size:17px; line-height:1.45; }
+  .script { font-size:16px; line-height:1.75; }
+  .script .highlight { font-size:17px; }
+  .one-rule { padding:18px; }
+  .one-rule h2 { font-size:22px; }
+
+  .commit-block { padding:14px 0; }
+  .commit-header { gap:8px; margin-bottom:8px; }
+  .commit-name-input { font-size:16px; }
+  .status-btn { width:52px; height:48px; font-size:16px; }
+
+  .pillar-header { padding:14px 12px; min-height:52px; }
+  .pillar-header h3 { font-size:16px; }
+  .pillar-body p { font-size:15px; line-height:1.7; }
+
+  .streak-num { font-size:48px; }
+  .phase-badge { padding:8px 12px; font-size:12px; }
+  .weekly-rate-num { font-size:28px; }
+
+  textarea { font-size:16px; padding:14px; }
+  .save-btn { font-size:17px; padding:17px; min-height:54px; border-radius:12px; }
+  .reset-btn { font-size:15px; padding:14px; min-height:50px; border-radius:12px; }
+
+  .mve-step { font-size:15px; gap:12px; }
+  .fw-btn { padding:10px 12px; font-size:15px; }
+  .log-date { font-size:16px; }
+
+  /* ── Segmented controls: fixed grids, never ragged wraps ── */
+  .seg-row { display:grid; gap:8px; }
+  .seg-row.cols-3 { grid-template-columns:repeat(3, 1fr); }
+  .seg-row.cols-4 { grid-template-columns:repeat(2, 1fr); }
+  .seg-btn {
+    min-width:0; padding:12px 6px; font-size:15px;
+    min-height:50px; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+
+  /* ── Pills: two even columns instead of a ragged wrap ── */
+  .track-pills, .pillar-pills {
+    display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;
+  }
+  .track-pill, .pillar-pill {
+    text-align:center; padding:11px 8px; font-size:14px;
+    min-height:46px; border-radius:12px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+
+  .field-label { font-size:14px; margin:16px 0 7px; }
+  .backlog-input { font-size:16px; }
+
+  /* ── Pretender/Operator: stacked cards, no sideways scroll ── */
+  .fw-table-wrap { overflow-x:visible; }
+  .fw-table { min-width:0; display:block; }
+  .fw-table thead { display:none; }
+  .fw-table tbody, .fw-table tr, .fw-table td { display:block; width:auto; }
+  .fw-table tr { padding:14px 16px; border-bottom:1px solid #21262d; }
+  .fw-table tr:last-child { border-bottom:none; }
+  .fw-table td { border:none; padding:0; font-size:15px; line-height:1.5; }
+  .fw-table td:first-child { color:#f85149; padding-bottom:12px; }
+  .fw-table td::before {
+    display:block; font-size:12px; letter-spacing:1.5px;
+    text-transform:uppercase; color:#8b949e; margin-bottom:4px; font-weight:700;
+  }
+  .fw-table td:first-child::before { content:'Pretender'; }
+  .fw-table td:last-child::before  { content:'Operator'; }
+
+  #toast {
+    bottom:calc(68px + max(env(safe-area-inset-bottom), 6px));
+    font-size:14px; padding:12px 22px;
+  }
+  .fp-step { font-size:15px; }
+  .fp-n { display:block; min-width:0; margin-bottom:3px; }
+  .l4-metric { font-size:15px; }
+  .rung-row { padding:13px; }
+}
+
+/* Very small phones (iPhone SE, 320px) */
+@media (max-width:374px) {
+  header h1 { font-size:9px; letter-spacing:2px; }
+  #section-title { font-size:19px; }
+  .tab { font-size:12px; padding:7px 1px 4px; }
+  .tab .tab-icon { font-size:20px; }
+  .check-text { font-size:16px; }
+  /* stays at 16px: anything smaller makes iOS zoom the page on focus */
+  .commit-name-input { font-size:16px; }
+  .status-btn { width:46px; height:44px; font-size:15px; }
+  .status-btns { gap:6px; }
+  .one-rule h2 { font-size:19px; letter-spacing:1px; }
+  .block { padding:14px; }
+  .seg-btn { font-size:14px; padding:11px 4px; }
+  .track-pill, .pillar-pill { font-size:13px; }
+}
+
+/* Auto-grow textareas */
+textarea { overflow:hidden; }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<header>
+  <div class="header-inner">
+    <div class="header-titles">
+      <h1>POS</h1>
+      <div id="section-title">Morning</div>
+      <div id="date-display"></div>
+    </div>
+    <button class="layout-toggle" onclick="cycleLayout()" id="layout-toggle-btn">&#9645; Auto</button>
+  </div>
+</header>
+
+<nav class="sidebar">
+  <div class="sidebar-brand">
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-nav-item active" data-tab="morning" onclick="showTab('morning',this)">
+      <span class="sidebar-nav-icon">&#9728;&#65039;</span>Morning
+    </div>
+    <div class="sidebar-nav-item" data-tab="track" onclick="showTab('track',this)">
+      <span class="sidebar-nav-icon">&#9881;&#65039;</span>Engine
+    </div>
+    <div class="sidebar-nav-item" data-tab="evening" onclick="showTab('evening',this)">
+      <span class="sidebar-nav-icon">&#127769;</span>Evening
+    </div>
+    <div class="sidebar-nav-item" data-tab="log" onclick="showTab('log',this)">
+      <span class="sidebar-nav-icon">&#128200;</span>Score
+    </div>
+    <div class="sidebar-nav-item" data-tab="pillars" onclick="showTab('pillars',this)">
+      <span class="sidebar-nav-icon">&#128737;&#65039;</span>Firewall
+    </div>
+  </div>
+  <div class="sidebar-footer">THE OPERATOR v2</div>
+</nav>
+
+<div class="tabs">
+  <div class="tab active" data-tab="morning" onclick="showTab('morning',this)">
+    <span class="tab-icon">&#9728;&#65039;</span>Morning
+  </div>
+  <div class="tab" data-tab="track" onclick="showTab('track',this)">
+    <span class="tab-icon">&#9881;&#65039;</span>Engine
+  </div>
+  <div class="tab" data-tab="evening" onclick="showTab('evening',this)">
+    <span class="tab-icon">&#127769;</span>Evening
+  </div>
+  <div class="tab" data-tab="log" onclick="showTab('log',this)">
+    <span class="tab-icon">&#128200;</span>Score
+  </div>
+  <div class="tab" data-tab="pillars" onclick="showTab('pillars',this)">
+    <span class="tab-icon">&#128737;&#65039;</span>Firewall
+  </div>
+</div>
+
+<!-- MORNING -->
+<div id="morning" class="section active">
+  <div class="desk-row">
+    <div class="desk-col">
+      <div class="one-rule">
+        <p>The One Rule</p>
+        <h2>NEVER LOG A ZERO</h2>
+      </div>
+      <div class="block" id="morning-boot-block">
+        <div class="block-title">Boot Sequence — 8 min</div>
+        <div id="morning-locked-banner" style="display:none;text-align:center;padding:14px;background:#0d2818;border:1px solid #1a7f37;border-radius:10px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;color:#3fb950;">&#10003; Morning Boot Logged</div>
+          <div id="morning-locked-detail" style="font-size:13px;color:#8b949e;margin-top:4px;"></div>
+        </div>
+        <div id="morning-checks-list">
+          <div class="check-item" onclick="toggle(this)">
+            <input type="checkbox"><div class="check-box"></div>
+            <div class="check-text">Feet on the floor inside the 07:15&ndash;07:20 alarm window</div>
+          </div>
+          <div class="check-item" onclick="toggle(this)">
+            <input type="checkbox"><div class="check-box"></div>
+            <div class="check-text">Calisthenics 07:20&ndash;07:35</div>
+          </div>
+          <div class="check-item" onclick="toggle(this)">
+            <input type="checkbox"><div class="check-box"></div>
+            <div class="check-text">Read the seven &ldquo;I am&rdquo; declarations</div>
+          </div>
+          <div class="check-item" onclick="toggle(this)">
+            <input type="checkbox"><div class="check-box"></div>
+            <div class="check-text">Named today's pillar &middot; stated the ONE task and where</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALISTHENICS — 07:20. The app picks the session so you do not have to. -->
+      <div class="block">
+        <div class="calis-top">
+          <div class="block-title" style="margin-bottom:0;">Calisthenics &mdash; 07:20</div>
+          <div id="calis-level-ctl" class="calis-level-ctl"></div>
+        </div>
+        <div id="calis-head" class="calis-head">&mdash;</div>
+        <div id="calis-body"></div>
+        <div class="calis-actions">
+          <button class="calis-btn primary" onclick="logCalisthenics('full')">Full &middot; 15 min</button>
+          <button class="calis-btn" onclick="logCalisthenics('short')">Short &middot; 7 min</button>
+          <button class="calis-btn floor" onclick="logCalisthenics('floor')">Floor &middot; 90 sec</button>
+        </div>
+        <div id="calis-msg" class="calis-msg"></div>
+      </div>
+
+      <!-- SEVEN "I AM" DECLARATIONS — the morning ritual, under 5 min -->
+      <div class="block pillars-block" id="declarations-block">
+        <div class="mve-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="block-title" style="margin-bottom:0;">The Seven Declarations &mdash; read once</div>
+          <span class="mve-arrow">&#9660;</span>
+        </div>
+        <div class="mve-body" id="declarations-body"></div>
+      </div>
+
+      <div class="block">
+        <div class="block-title">Today's Pillar &mdash; which one matters most</div>
+        <div class="pillar-pills" id="pillar-pills"></div>
+      </div>
+
+    </div>
+    <div class="desk-col">
+      <div class="block" style="padding:14px 20px;">
+        <button class="save-btn" id="morning-save-btn" onclick="saveMorningBoot()" style="font-size:16px;padding:14px;min-height:50px;">
+          &#9745; Log Morning Boot to Sheets
+        </button>
+        <div id="morning-saved-time" style="font-size:14px;color:#8b949e;text-align:center;margin-top:8px;"></div>
+      </div>
+      <div class="block">
+        <div class="block-title">Today's task &mdash; 09:00 block</div>
+        <div id="today-task" class="task-display empty">&mdash;</div>
+        <div class="field-hint" style="margin-top:10px;">Commitment #1, chosen last night. Change it in Engine, not here.</div>
+      </div>
+      <div class="block">
+        <div class="block-title">Morning Preparation</div>
+        <div class="script">
+          Today will contain resistance. I am ready for it.<br>
+          <span class="highlight">The discomfort is the work, not a signal to stop.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRACK / ENGINE -->
+<div id="track" class="section">
+  <div class="desk-row wide-left">
+    <div class="desk-col">
+
+      <!-- Engine Status -->
+      <div class="block">
+        <div class="block-title">Engine Status</div>
+        <div class="engine-status-row">
+          <div class="phase-badge" id="rung-badge" onclick="showTab('pillars',document.querySelector('.tab[data-tab=&quot;pillars&quot;]'))">
+            STARTER<span class="phase-sub">one 09:00 block &middot; something saved</span>
+          </div>
+          <div class="weekly-rate-wrap">
+            <div class="weekly-rate-num" id="fired-num">&mdash;<span class="weekly-rate-pct" id="fired-pct"></span></div>
+            <div class="weekly-rate-label">sessions fired / 5</div>
+          </div>
+        </div>
+        <div class="weekly-rate-bar"><div class="weekly-rate-fill" id="weekly-rate-fill" style="width:0%"></div></div>
+        <div class="streak-display" style="padding:14px 0 4px;">
+          <div class="streak-num" id="streak-num">0</div>
+          <div class="streak-label">consecutive days</div>
+        </div>
+      </div>
+
+      <!-- Commitments -->
+      <div class="block">
+        <div class="block-title">Daily Commitments &mdash; #1 is the deep-work task</div>
+        <div id="commitments-list"></div>
+      </div>
+
+      <!-- THE DAILY DEEP-WORK SESSION — Layer 3 -->
+      <div class="block">
+        <div class="block-title">Deep-Work Session &mdash; 09:00&ndash;10:30</div>
+
+        <div class="field-label">Did the session fire?</div>
+        <div class="seg-row cols-4" id="session-state-row">
+          <button class="seg-btn" data-val="full">Full block</button>
+          <button class="seg-btn" data-val="relocated">Relocated</button>
+          <button class="seg-btn" data-val="floor">Floor only</button>
+          <button class="seg-btn" data-val="skipped">Skipped</button>
+        </div>
+        <div class="field-hint">Relocated counts as fired. Only a fully skipped weekday is a miss.</div>
+
+        <div class="field-label">Which block</div>
+        <div class="seg-row cols-3" id="session-block-row">
+          <button class="seg-btn" data-val="09:00">09:00</button>
+          <button class="seg-btn" data-val="13:00">13:00</button>
+          <button class="seg-btn" data-val="other">Other</button>
+        </div>
+
+        <div class="field-label">The 90-second rule &mdash; did I stay through the discomfort point?</div>
+        <div class="seg-row cols-3" id="session-stayed-row">
+          <button class="seg-btn" data-val="used">Stayed</button>
+          <button class="seg-btn" data-val="not-needed">Never fired</button>
+          <button class="seg-btn" data-val="escaped">Escaped</button>
+        </div>
+
+        <div class="field-label">What was the feeling? <span class="req-mark">&#9679; name it, don't summarise it</span></div>
+        <textarea rows="2" placeholder="Bored. Stuck and stupid. Dreading it. Restless. — the word before the softer word." id="session-feeling"></textarea>
+
+        <div class="field-label required">What's saved <span class="req-mark">&#9679; no block ends without this</span></div>
+        <textarea rows="2" placeholder="A worked step, code re-explained in my own words, notes, a lab output, a practice answer..." id="session-saved"></textarea>
+
+        <div class="field-label">Where I stopped / what's next</div>
+        <textarea rows="2" placeholder="This becomes tomorrow's pre-trigger — the line I re-read at 08:31." id="session-stopped"></textarea>
+
+        <button class="save-btn" id="session-save-btn" onclick="saveSessionToSheets()"
+                style="font-size:16px;padding:14px;min-height:50px;margin-top:16px;">
+          &#9745; Log Session to Sheets
+        </button>
+        <div id="session-saved-msg" style="font-size:14px;color:#8b949e;text-align:center;margin-top:8px;"></div>
+      </div>
+
+      <!-- CURRICULUM — what is done, what is left, what is next -->
+      <div class="block">
+        <div class="block-title">Curriculum &mdash; What&rsquo;s Next</div>
+        <div class="cur-track-row" id="cur-track-pills"></div>
+        <div class="cur-track-row" id="cur-book-pills" style="display:none;"></div>
+        <div class="cur-progress" id="cur-progress">&mdash;</div>
+        <div class="weekly-rate-bar"><div class="weekly-rate-fill" id="cur-bar" style="width:0%"></div></div>
+        <div id="cur-next"></div>
+        <button class="cur-toggle" id="cur-toggle" onclick="toggleCurriculumAll()">Show all &#9660;</button>
+        <div id="cur-all" style="display:none;"></div>
+        <div id="cur-empty" style="font-size:14px;color:#8b949e;text-align:center;padding:14px 0;display:none;">
+          No curriculum loaded. Run <strong>seedCurriculumCCP</strong> once from the Apps Script editor.
+        </div>
+      </div>
+
+    </div>
+    <div class="desk-col">
+
+      <!-- BAD-DAY FLOOR — Stage 4-B, per track -->
+      <div class="block mve-block" onclick="this.classList.toggle('open')">
+        <div class="mve-header">
+          <div class="block-title" style="margin-bottom:0;">&#128721; Bad-Day Floor &mdash; ~10 min</div>
+          <span class="mve-arrow">&#9660;</span>
+        </div>
+        <div class="mve-body">
+          <div class="mve-step">
+            <div class="mve-num">AI</div>
+            <div>Read and understand one concept, or type out and run one small piece of example code.</div>
+          </div>
+          <div class="mve-step">
+            <div class="mve-num">IBM</div>
+            <div>One lab step, or one SQL query.</div>
+          </div>
+          <div class="mve-step">
+            <div class="mve-num">CCP</div>
+            <div>One page, or one practice question.</div>
+          </div>
+          <div class="mve-step">
+            <div class="mve-num">ID</div>
+            <div>The 07:15 first-alarm rise + cold water, and the two-minute evening review.</div>
+          </div>
+          <div class="mve-rule">
+            The floor exists to reward the tired version of me and keep the streak alive.<br>
+            Marking it green is a <strong style="color:#3fb950;">win</strong>, not a failure. Doing the floor is showing up.<br>
+            <em>But the floor is for bad days — if it becomes the daily default, check sleep upstream.</em>
+          </div>
+        </div>
+      </div>
+
+      <!-- SKILLS BACKLOG — Layer 2 step 6 -->
+      <div class="block pillars-block">
+        <div class="mve-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="block-title" style="margin-bottom:0;">Skills Backlog</div>
+          <span class="mve-arrow">&#9660;</span>
+        </div>
+        <div class="mve-body">
+        <div style="font-size:13px;color:#8b949e;margin-bottom:12px;line-height:1.6;">
+          Blocked after staying with it? Write the exact missing capability here and continue with the next sub-step.
+          <strong style="color:#c9d1d9;">Do not switch resources or open a new course.</strong>
+        </div>
+        <div class="backlog-add">
+          <input type="text" id="backlog-input" class="backlog-input" placeholder="The exact thing that blocked me&hellip;">
+          <button class="backlog-btn" onclick="addBacklog()">Add</button>
+        </div>
+        <div id="backlog-list"></div>
+        <div id="backlog-empty" style="font-size:14px;color:#8b949e;text-align:center;padding:12px 0;">Nothing blocked today.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- EVENING — one pass, top to bottom, one save. -->
+<div id="evening" class="section">
+  <div class="desk-row wide-left">
+    <div class="desk-col">
+
+      <!-- 1. The same three commitments as Engine, same keys; names read-only here. -->
+      <div class="block">
+        <div class="block-title">1 &middot; Mark every commitment</div>
+        <div id="evening-commits"></div>
+      </div>
+
+      <!-- 2. Root cause. Only matters when there is an X. -->
+      <div class="block">
+        <div class="block-title">2 &middot; Miss? Root cause &mdash; 1 sentence</div>
+        <textarea rows="2" placeholder="Factual. Brief. The mechanical reason, not an excuse. Leave empty if nothing was missed." id="miss-note"></textarea>
+      </div>
+
+      <!-- 3. Tomorrow. Line 1 is pre-filled from "where I stopped" when this is empty. -->
+      <div class="block">
+        <div class="block-title">3 &middot; Tomorrow's tasks</div>
+        <textarea rows="4" placeholder="1. The deep-work task &mdash; this is the 09:00 block&#10;2. (supporting / CCP continuity)&#10;3." id="tomorrow-plan"></textarea>
+        <div class="prefill-hint" id="prefill-hint" style="display:none;">Line 1 came from &ldquo;where I stopped&rdquo;. Edit it if tomorrow starts somewhere else.</div>
+      </div>
+
+      <!-- 4. One line. Replaces verdict + daily note + takeaway + reflection. -->
+      <div class="block">
+        <div class="block-title">4 &middot; Tonight's verdict &mdash; one line</div>
+        <textarea rows="2" placeholder="Did I operate like the person I am becoming? What helped or hurt most?" id="verdict"></textarea>
+      </div>
+
+    </div>
+    <div class="desk-col">
+
+      <!-- The shutdown protocol. Four of five tick themselves from what is filled in above. -->
+      <div class="block">
+        <div class="block-title">Shutdown Protocol</div>
+        <div id="evening-checks">
+          <div class="check-item auto"><input type="checkbox"><div class="check-box"></div><div class="check-text">Every commitment marked D / M / X</div></div>
+          <div class="check-item auto"><input type="checkbox"><div class="check-box"></div><div class="check-text">Root cause written for any miss</div></div>
+          <div class="check-item auto"><input type="checkbox"><div class="check-box"></div><div class="check-text">Tomorrow's tasks chosen</div></div>
+          <div class="check-item auto"><input type="checkbox"><div class="check-box"></div><div class="check-text">Where I stopped written</div></div>
+          <div class="check-item" onclick="toggle(this)"><input type="checkbox"><div class="check-box"></div><div class="check-text">Shutdown alarm &middot; bedtime set</div></div>
+        </div>
+        <div class="field-hint" style="margin-top:12px;">The first four tick themselves as the day gets filled in. Only the last is a tap.</div>
+      </div>
+
+      <div class="block">
+        <button class="save-btn" id="save-btn" onclick="saveAndReset()">&#10003; Save to Log &amp; Reset for Tomorrow</button>
+        <button class="reset-btn" onclick="resetDay()">Reset only (no save)</button>
+      </div>
+
+      <div class="block">
+        <div class="one-rule" style="margin-bottom:0;">
+          <p>Close the day</p>
+          <h2 style="font-size:20px;">I SHOWED UP.<br>I STAYED.<br>I DID THE WORK.</h2>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div id="log" class="section">
+
+  <!-- The four cumulative counters. Every one of these can only go up. -->
+  <div class="block">
+    <div class="block-title">The Scoreboard</div>
+    <div class="score-grid" id="score-grid"></div>
+    <div class="score-note">
+      Every number here rises. None of them reset when you miss a day &mdash;
+      that is the point. <em>The floor still pays.</em>
+    </div>
+  </div>
+
+  <!-- Personal bests: the thing you can beat, rather than the thing you can lose. -->
+  <div class="block">
+    <div class="block-title">Personal Bests</div>
+    <div id="score-bests"></div>
+  </div>
+
+  <!-- The 30-day evidence window, restated here where the numbers live. -->
+  <div class="block">
+    <div class="block-title">Evidence Window</div>
+    <div id="score-window" class="chain-day">&mdash;</div>
+    <div class="weekly-rate-bar"><div class="weekly-rate-fill" id="score-window-bar" style="width:0%"></div></div>
+    <div class="chain-why" style="margin-top:12px;margin-bottom:0;">
+      You judged <strong>30 days</strong> of a visibly climbing scoreboard enough to start
+      convincing the part of you that doesn&rsquo;t yet believe the payoff is real.
+      <em>Once you have proof, the bet changes.</em>
+    </div>
+  </div>
+
+    <!-- SUNDAY WEEKLY REVIEW — Layer 4 -->
+  <!-- Sunday review — Layer 4. Read-only, so it lives with the numbers. -->
+  <div class="block" id="weekly-review-block">
+  <div class="block-title">Sunday Review &mdash; Layer 4</div>
+    <div id="weekly-review-banner" class="weekly-banner"></div>
+
+    <div class="block-title" style="margin-top:16px;">It's working when&hellip;</div>
+    <div id="l4-metrics"></div>
+
+    <div class="block-title" style="margin-top:20px;">It's breaking when&hellip;</div>
+    <div id="l4-warnings"></div>
+
+    <div class="l4-adjust">
+      <strong style="color:#c9d1d9;">Adjustment — parameters only.</strong>
+      Block preempted most days &rarr; move the anchor time.
+      Nothing getting saved &rarr; the task is too big, shrink daily scope.
+      Floor is the default &rarr; check sleep and energy upstream.
+      <em>Tuning, never redesign.</em>
+    </div>
+  </div>
+
+  <!-- History, demoted beneath the numbers. -->
+  <div class="block">
+    <div class="mve-header" onclick="toggleHistory()">
+      <div class="block-title" style="margin-bottom:0;">History</div>
+      <span class="mve-arrow" id="history-arrow">&#9660;</span>
+    </div>
+    <div id="history-body" style="display:none;margin-top:16px;">
+      <div class="log-toolbar">
+        <div class="log-stats" id="log-stats">&mdash;</div>
+        <button class="export-btn" onclick="exportLog()">&#8593; Export</button>
+      </div>
+      <div id="log-loading" class="log-loading" style="display:none;">
+        <span class="spinner"></span> Loading log...
+      </div>
+      <div id="log-empty" style="display:none;">
+        <div style="font-size:36px;margin-bottom:12px;">&#9634;</div>
+        <div style="font-size:13px;letter-spacing:1px;text-transform:uppercase;">No entries yet</div>
+        <div style="font-size:12px;margin-top:8px;">Complete a day and tap<br>"Save to Log &amp; Reset" to begin.</div>
+      </div>
+      <div id="log-list"></div>
+    </div>
+  </div>
+</div>
+<!-- FIREWALL / ARCHITECT -->
+<div id="pillars" class="section">
+  <div class="desk-row equal">
+    <div class="desk-col">
+
+      <!-- LAYER 5 — FAILURE PROTOCOL -->
+      <div class="block">
+        <div class="block-title">Failure Protocol &mdash; Layer 5</div>
+        <div class="escalation-top">
+          <div>
+            <div class="escalation-level-badge" id="fp-badge">ON TRACK</div>
+            <div class="escalation-level-name" id="fp-name">No consecutive misses</div>
+            <div class="escalation-days-label" id="fp-days">&mdash;</div>
+          </div>
+          <div class="escalation-dots" id="fp-dots">
+            <div class="esc-dot active"></div>
+            <div class="esc-dot"></div>
+            <div class="esc-dot"></div>
+          </div>
+        </div>
+        <div id="fp-action" class="fp-action"></div>
+        <div class="fp-steps">
+          <div class="fp-step"><span class="fp-n">1 miss</span>Do the minimum-viable floor the very next day. Do <strong>not</strong> open the plan to redesign. One miss is one data point.</div>
+          <div class="fp-step"><span class="fp-n">2 in a row</span><em>The only real failure.</em> Fire the smallest version the next day and mark it green. Add nothing, rebuild nothing.</div>
+          <div class="fp-step"><span class="fp-n">3+</span>Restart at the floor for the whole next week, no upgrades, and bring it to the Sunday review as evidence. The reset is <strong>executing</strong> the existing system &mdash; never building a new one.</div>
+        </div>
+      </div>
+
+      <!-- LAYER 6 — EVOLUTION LADDER -->
+      <div class="block">
+        <div class="block-title">Evolution Ladder &mdash; Layer 6</div>
+        <div style="font-size:13px;color:#8b949e;margin-bottom:14px;line-height:1.6;">
+          Upgrades trigger on the gate met, never on the calendar. Gate not met &rarr; stay on the rung.
+          <strong style="color:#c9d1d9;">That is the system working.</strong>
+        </div>
+        <div id="rung-list"></div>
+      </div>
+
+      <!-- 30-DAY CHAIN -->
+      <div class="block">
+        <div class="block-title">30-Day Chain &mdash; The Evidence Window</div>
+        <div id="chain-day" class="chain-day"></div>
+        <div class="chain-why">
+          You judged <strong>30 days</strong> of a visibly climbing scoreboard enough to start convincing
+          the part of you that doesn&rsquo;t yet believe the payoff is real. This grid is that evidence.
+          <em>Once you have proof, the bet changes.</em>
+        </div>
+        <div id="chain-grid" class="chain-grid"></div>
+        <div id="chain-empty" style="font-size:14px;color:#8b949e;text-align:center;padding:10px 0;display:none;">Open the Log tab first to populate the chain.</div>
+        <div class="chain-legend">
+          <div class="chain-legend-item"><div class="chain-legend-dot" style="background:#1a7f37;"></div>Full</div>
+          <div class="chain-legend-item"><div class="chain-legend-dot" style="background:#9a6700;"></div>Min</div>
+          <div class="chain-legend-item"><div class="chain-legend-dot" style="background:#2a0d11;border:1px solid #8c1c2a;"></div>Miss</div>
+          <div class="chain-legend-item"><div class="chain-legend-dot" style="background:#161b22;border:1px solid #21262d;"></div>No data</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="desk-col">
+
+      <!-- FIREWALL LOG -->
+      <div class="block">
+        <div class="block-title">Firewall Log — Tap to Log a Violation</div>
+        <div class="fw-buttons">
+          <button class="fw-btn" onclick="logFirewall('PHONE BREACH')">&#128241; Phone Breach</button>
+          <button class="fw-btn" onclick="logFirewall('OVERSLEPT')">&#9200; Overslept</button>
+          <button class="fw-btn" onclick="logFirewall('SCROLL AS REST')">&#128241; Scroll-as-Rest</button>
+          <button class="fw-btn" onclick="logFirewall('REDESIGN URGE')">&#128260; Redesign Urge</button>
+          <button class="fw-btn" onclick="logFirewall('COURSE HOP')">&#128218; Course Hop</button>
+          <button class="fw-btn" onclick="logFirewall('POST-MISS SPIRAL')">&#128201; Miss Spiral</button>
+          <button class="fw-btn" onclick="logFirewall('JUST TODAY')">&#128128; Just Today</button>
+          <button class="fw-btn" onclick="logFirewall('ESCAPE REACHED')">&#127918; Escape Reached</button>
+        </div>
+        <div id="fw-log-list"></div>
+        <div id="fw-empty" style="font-size:15px;color:#8b949e;text-align:center;padding:16px 0;">No violations logged. Keep it that way.</div>
+        <button class="fw-clear-btn" onclick="clearFirewallLog()">Clear log</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RISK REGISTER — the behavioural failure modes the system is built against.
+       Example content: replace with your own before using this for real. -->
+  <div class="section-group-title">The Risk Register <span style="color:#8b949e;font-weight:400;">&middot; example content</span></div>
+  <div class="block risk-verdict">
+    <div class="block-title" style="color:#3fb950;">The premise the design rests on</div>
+    <p>Consistency is usually not the missing ingredient. People who abandon a study plan are often
+    demonstrably capable of sustained, difficult effort elsewhere &mdash; it simply flows to whatever
+    reliably pays for it.</p>
+    <p><strong>So the design goal is a scoreboard that pays for effort tonight, including a reduced
+    &ldquo;floor&rdquo; version that still pays on a bad day.</strong> Long-horizon goals lose to
+    short-horizon feedback unless you build the short-horizon feedback yourself. Every counter in this
+    app is cumulative and none of them reset on a missed day, which is the whole point.</p>
+    <p class="risk-protect"><strong>What the register is for:</strong> naming a failure mode in advance,
+    with the observable tell and the counter-move, so that recognising it in the moment does not depend
+    on insight you will not have at the time.</p>
+  </div>
+  <div id="risk-list"></div>
+
+  <!-- THE SEVEN PILLARS — the compiled Operator identity -->
+  <div class="section-group-title">The Operator &mdash; Seven Pillars</div>
+  <div id="pillars-list"></div>
+
+  <!-- ANTI-IDENTITY FIREWALL — Stage 3 -->
+  <div class="section-group-title" style="margin-top:20px;">Anti-Identity Firewall &mdash; The Pretender vs The Operator</div>
+  <div class="block" style="padding:0;overflow:hidden;">
+    <div class="fw-table-wrap">
+      <table class="fw-table">
+        <thead><tr><th>The Pretender does&hellip;</th><th>The Operator does instead&hellip;</th></tr></thead>
+        <tbody>
+          <tr><td>Consumes a course or video and counts it as progress</td><td>Does the work hands-on and documents each step &mdash; worked exercises, understood code, notes &mdash; saved to the portfolio</td></tr>
+          <tr><td>Opens a new tool or course while the current one is unfinished</td><td>Finishes the active course or project before starting anything new</td></tr>
+          <tr><td>Redesigns the plan the moment it gets hard</td><td>Executes the existing plan; logs improvement ideas for the formal review only</td></tr>
+          <tr><td>Waits to feel ready or motivated</td><td>Starts at the scheduled time and lets motivation follow the action</td></tr>
+          <tr><td>Escapes to comfort (phone, oversleep, scrolling) at first discomfort</td><td>Sets a timer and stays with the difficulty ten more minutes</td></tr>
+          <tr><td>Relabels avoidance as &ldquo;planning&rdquo; or &ldquo;researching&rdquo;</td><td>Names the escape reflex out loud and returns to the task</td></tr>
+          <tr><td>Goes silent and disappears after a missed day</td><td>Does the minimum version the next day &mdash; never misses twice</td></tr>
+          <tr><td>Declares the whole week lost after one slip</td><td>Treats one slip as one data point and keeps the rest of the day intact</td></tr>
+          <tr><td>Tells a soft story about what he &ldquo;sort of&rdquo; did</td><td>Records the real work done, honestly, in the tracker</td></tr>
+          <tr><td>Is half-present with family while mentally at his desk</td><td>Protects the evening block as fully present, owned family time</td></tr>
+          <tr><td>Relies on willpower against temptations he could remove</td><td>Engineers the environment so the temptation isn't in reach</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 5 NON-NEGOTIABLE RULES -->
+  <div class="section-group-title" style="margin-top:20px;">The 5 Non-Negotiable Rules</div>
+
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">R1</span><h3>The Alarm Is Not a Question</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body">
+      <p><strong style="color:#e6edf3;">Rule:</strong> Wake 07:15. Feet on the floor inside the 07:15–07:20 alarm window. No debate. No evaluation. No phone.</p>
+      <p><strong style="color:#e8375a;">Bright line:</strong> Still horizontal at 07:21 = violated. No grey area.</p>
+      <p><strong style="color:#8b949e;">Corrective:</strong> Log "OVERSLEPT" in the Firewall. Execute the full Boot Sequence anyway — late, imperfect, executed. If it repeats, the cause is upstream: check the 22:30 shutdown and the bedtime.</p>
+    </div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">R2</span><h3>Work Surface Before Escape Surface</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body">
+      <p><strong style="color:#e6edf3;">Rule:</strong> The day starts on the work surface, not the escape surface. The certification laptop opens to the pre-laid-out task <em>before</em> the phone is unlocked. During 09:00–10:30 and the 13:00–14:00 lunch block the phone is in another room.</p>
+      <p><strong style="color:#e8375a;">Bright line:</strong> Unlocking the screen (not just silencing the alarm) before the work surface is open = violated.</p>
+      <p><strong style="color:#8b949e;">Corrective:</strong> Phone into a drawer for the rest of the block. Log "PHONE BREACH". Three violations in a week &rarr; the phone charges in a different room, permanently.</p>
+      <p style="color:#8b949e;font-style:italic;">This is the single most important rule. Follow only this and the Builder, the Architect of Defaults, the One Who Stays and the Metronome all engage almost on their own.</p>
+    </div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">R3</span><h3>Nothing Ends Without Something Saved</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body">
+      <p><strong style="color:#e6edf3;">Rule:</strong> No focus block ends without something saved to show for it — a worked step, code re-explained in my own words, notes, a lab output, a practice answer. And every commitment row is marked D, M or X before sleep. No blank rows.</p>
+      <p><strong style="color:#e8375a;">Bright line:</strong> A session logged with an empty "what's saved" = the session went through the motions. Going to sleep with any unmarked row = violated. Even all-X beats blank.</p>
+      <p><strong style="color:#8b949e;">Corrective:</strong> Get up, walk to the desk, save the thing, mark the rows, write one sentence. The inconvenience is the point.</p>
+    </div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">R4</span><h3>The 14-Day Lock</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body">
+      <p><strong style="color:#e6edf3;">Rule:</strong> The Daily Deep-Work Session is locked for 14 days from its first run (1 September 2026). Content — which task, which track — can change. Architecture cannot.</p>
+      <p><strong style="color:#e8375a;">Bright line:</strong> Opening a blank page to draft a "better version" inside the lock = the redesign loop. The real risk is not the design; it is day&nbsp;3 at 08:37 thinking <em>"this sheet could be a little better."</em> That moment is what the sheet exists for.</p>
+      <p><strong style="color:#8b949e;">Corrective:</strong> Close the page. Log "REDESIGN URGE". Execute what exists. Changes happen at a review point, on evidence, as a <strong>parameter tweak</strong> — never mid-week, on mood, as a rebuild.</p>
+      <p style="color:#8b949e;font-style:italic;">Test: adjusting timing, which block, or the floor threshold = adapting. Regenerating because it feels off = the loop.</p>
+      <div id="lock-status" class="lock-status"></div>
+    </div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">R5</span><h3>Never Miss Twice</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body">
+      <p><strong style="color:#e6edf3;">Rule:</strong> After a miss, execute at least the bad-day floor the very next day — and do <strong>not</strong> open the plan to redesign. Two consecutive zero days does not happen.</p>
+      <p><strong style="color:#e8375a;">Bright line:</strong> Two consecutive days with zero D or M = violated. One bad day + one floor day = within the rules.</p>
+      <p><strong style="color:#8b949e;">Corrective:</strong> Layer 5. Fire the smallest version the next day and mark it green. Add nothing, rebuild nothing. Three or more &rarr; restart at the floor for the whole week and bring it to the Sunday review as evidence.</p>
+      <p style="color:#8b949e;font-style:italic;">Perfection was never the standard; recovery speed is. Who I am is defined by how fast I return, not by whether I ever fall.</p>
+    </div>
+  </div>
+
+  <!-- BACKUP SELF-TALK — Stage 4-E / Layer 5. The SECONDARY lever. -->
+  <div class="section-group-title" style="margin-top:20px;">Backup Self-Talk &mdash; the secondary lever</div>
+  <div class="block">
+    <div style="font-size:13px;color:#8b949e;margin-bottom:14px;line-height:1.6;">
+      Use these only when the environment and systems haven't already made the action automatic.
+      The primary levers are the surroundings and the pre-committed systems &mdash; not talking yourself into it.
+    </div>
+    <div class="script-card">
+      <div class="script-card-label">When the reflex fires</div>
+      <p>&ldquo;This is the reflex, not me. The discomfort is the work. I don't need to feel like it &mdash; I need to do the next small thing. Ten more minutes. <strong>I am the one who stays.</strong>&rdquo;</p>
+    </div>
+    <div class="script-card">
+      <div class="script-card-label">When the pull is to redesign the plan</div>
+      <p>&ldquo;The plan is fine. Executing it is the hard part &mdash; and that's the part I'm doing right now. <strong>I'll note the idea for Sunday.</strong>&rdquo;</p>
+    </div>
+  </div>
+
+  <!-- 5 COACH SCRIPTS -->
+  <div class="section-group-title" style="margin-top:20px;">Internal Coach Scripts</div>
+
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">S1</span><h3>The Alarm Negotiation</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body"><p>You have lost this negotiation a hundred times. Not once has "10 more minutes" turned into a productive morning. The debate is rigged — the version of you in bed always wins because he has zero interest in your goals. <strong style="color:#e8375a;">5-4-3-2-1. Stand up.</strong></p></div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">S2</span><h3>The "Just Today" Excuse</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body"><p>You know exactly where "just today" leads. It has never been one day. It was never one day. "Just today" is the Promise Breaker's signature move — and you have fallen for it every single time. <strong style="color:#e8375a;">Do the minimum. Log the M. Move.</strong></p></div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">S3</span><h3>The Post-Miss Spiral</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body"><p>The day is not ruined. You missed one thing. That is an X in one column, not a line through the entire row. <strong style="color:#e8375a;">Open the app. Look at what is still unmarked. Do one of those.</strong> An imperfect day with one M is still a non-zero day.</p></div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">S4</span><h3>The Redesign Urge</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body"><p>You have an archive of perfect plans that were each executed for less than a week. The system is not flawed. It is uncomfortable. Those are different things. <strong style="color:#e8375a;">Log the urge. Close the blank page. Execute what exists. You redesign on Day 14. Not before.</strong></p></div>
+  </div>
+  <div class="pillar" onclick="togglePillar(this)">
+    <div class="pillar-header"><span class="pillar-num">S5</span><h3>The Phone Pull</h3><span class="pillar-arrow">&#9660;</span></div>
+    <div class="pillar-body"><p>You are not "just checking." You have never "just checked." You know exactly what happens: one notification becomes 30 minutes of nothing. <strong style="color:#e8375a;">Put it down. It will still be there when the system is done. Your goals will not.</strong></p></div>
+
+  </div>
+
+
+
+</div>
+
+<script>
+// ── DATE ──────────────────────────────────────────────────────────────────────
+var DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function dateLabel(d) {
+  return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+}
+function isoDate(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+var now = new Date();
+document.getElementById('date-display').textContent = dateLabel(now);
+
+// First run of the Daily Deep-Work Session (Project Memory §22/§24). Nothing
+// before this date counts as a miss — the system had not started yet.
+var LOCK_START = '2026-09-01';
+var LOCK_DAYS  = 14;
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+var toastTimer;
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.className = ''; }, 3000);
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+var TAB_TITLES = {
+  morning:'Morning', track:'Engine', evening:'Evening',
+  log:'Score', pillars:'Firewall'
+};
+function setSectionTitle(id) {
+  var el = document.getElementById('section-title');
+  if (el) el.textContent = TAB_TITLES[id] || '';
+}
+
+function showTab(id, el) {
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.sidebar-nav-item').forEach(function(s){ s.classList.remove('active'); });
+  var section = document.getElementById(id);
+  section.classList.add('active');
+  el.classList.add('active');
+  var tabEl     = document.querySelector('.tab[data-tab="' + id + '"]');
+  var sidebarEl = document.querySelector('.sidebar-nav-item[data-tab="' + id + '"]');
+  if (tabEl)     tabEl.classList.add('active');
+  if (sidebarEl) sidebarEl.classList.add('active');
+  setSectionTitle(id);
+  section.scrollTop = 0;
+  window.scrollTo(0, 0);
+  if (id === 'morning') renderTodayTask();
+  if (id === 'track')   { buildCommitments(); if (cachedLog) updateWeeklyRate(cachedLog); loadCurriculum(); }
+  if (id === 'evening') { renderEveningCommits(); prefillTomorrow(); renderEveningChecks(); }
+  if (id === 'log')     { renderScore(); loadCurriculum(); renderWeekly(cachedLog || []); if (!cachedLog) loadLog(); }
+  if (id === 'pillars') initFirewall();
+}
+
+// ── LAYOUT TOGGLE ─────────────────────────────────────────────────────────────
+function applyLayout() {
+  var pref = localStorage.getItem('op_layout') || 'auto';
+  var body = document.body;
+  body.classList.remove('desktop-mode', 'force-mobile');
+  if (pref === 'desktop')     body.classList.add('desktop-mode');
+  else if (pref === 'mobile') body.classList.add('force-mobile');
+  updateToggleBtn(pref);
+}
+function cycleLayout() {
+  var order = ['auto','desktop','mobile'];
+  var cur   = localStorage.getItem('op_layout') || 'auto';
+  var next  = order[(order.indexOf(cur) + 1) % 3];
+  localStorage.setItem('op_layout', next);
+  applyLayout();
+}
+function updateToggleBtn(pref) {
+  var btn = document.getElementById('layout-toggle-btn');
+  if (!btn) return;
+  if (pref === 'desktop')     btn.textContent = '🖥 Desktop';
+  else if (pref === 'mobile') btn.textContent = '📱 Mobile';
+  else                        btn.textContent = '□ Auto';
+}
+applyLayout();
+window.addEventListener('resize', function() {
+  if ((localStorage.getItem('op_layout') || 'auto') === 'auto') applyLayout();
+});
+
+// ── CHECKBOXES ────────────────────────────────────────────────────────────────
+function toggle(el) { el.classList.toggle('checked'); saveChecks(); }
+function togglePillar(el) { el.classList.toggle('open'); }
+
+function saveChecks() {
+  var mc = [];
+  document.querySelectorAll('#morning .check-item').forEach(function(el) {
+    mc.push(el.classList.contains('checked'));
+  });
+  localStorage.setItem('op_morning_checks', JSON.stringify(mc));
+  var ec = [];
+  document.querySelectorAll('#evening .check-item').forEach(function(el) {
+    ec.push(el.classList.contains('checked'));
+  });
+  localStorage.setItem('op_evening_checks', JSON.stringify(ec));
+  localStorage.setItem('op_checks_date', isoDate(new Date()));
+}
+
+function restoreChecks() {
+  // Checkbox state is per-day. Without this guard a day that was never closed
+  // out leaves yesterday's ticks showing as today's.
+  if ((localStorage.getItem('op_checks_date') || '') !== isoDate(new Date())) {
+    localStorage.removeItem('op_morning_checks');
+    localStorage.removeItem('op_evening_checks');
+    localStorage.removeItem('op_checks_date');
+    return;
+  }
+  try {
+    var mc = JSON.parse(localStorage.getItem('op_morning_checks') || '[]');
+    document.querySelectorAll('#morning .check-item').forEach(function(el, i) {
+      if (mc[i]) el.classList.add('checked');
+    });
+  } catch(e) {}
+  try {
+    var ec = JSON.parse(localStorage.getItem('op_evening_checks') || '[]');
+    document.querySelectorAll('#evening .check-item').forEach(function(el, i) {
+      if (ec[i]) el.classList.add('checked');
+    });
+  } catch(e) {}
+}
+restoreChecks();
+
+function saveMorningBoot() {
+  var mc = [];
+  document.querySelectorAll('#morning .check-item').forEach(function(el) {
+    mc.push(el.classList.contains('checked'));
+  });
+  var now = new Date();
+  var isLate = now.getHours() >= 12;
+  var btn = document.getElementById('morning-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  var payload = { checks: mc, late: isLate, nonNeg: todayTaskName(), pillar: todayPillarId() };
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      var res = JSON.parse(result);
+      if (res.success) {
+        var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        var tag = isLate ? 'late' : 'on-time';
+        localStorage.setItem('op_morning_saved', isoDate(now) + ' ' + timeStr + ' ' + tag);
+        lockMorningSection(timeStr, isLate);
+        showToast(isLate ? 'Late boot logged (after 12:00)' : 'Morning boot logged');
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '&#9745; Log Morning Boot to Sheets';
+        showToast('Save failed: ' + (res.error || 'unknown'), 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '&#9745; Log Morning Boot to Sheets';
+      showToast('Error: ' + err.message, 'error');
+    })
+    .saveMorningChecks(JSON.stringify(payload));
+}
+
+function lockMorningSection(timeStr, isLate) {
+  var banner = document.getElementById('morning-locked-banner');
+  var detail = document.getElementById('morning-locked-detail');
+  var btn    = document.getElementById('morning-save-btn');
+  var checks = document.getElementById('morning-checks-list');
+
+  if (isLate) {
+    banner.style.background = '#2a1f00';
+    banner.style.borderColor = '#9a6700';
+    banner.querySelector('div').style.color = '#d29922';
+    banner.querySelector('div').innerHTML = '&#9888; Late Boot — Logged After 12:00';
+  } else {
+    banner.style.background = '#0d2818';
+    banner.style.borderColor = '#1a7f37';
+    banner.querySelector('div').style.color = '#3fb950';
+    banner.querySelector('div').innerHTML = '&#10003; Morning Boot Logged';
+  }
+  detail.textContent = 'Logged at ' + timeStr;
+  banner.style.display = 'block';
+  btn.style.display = 'none';
+  document.getElementById('morning-saved-time').style.display = 'none';
+
+  checks.querySelectorAll('.check-item').forEach(function(el) {
+    el.style.opacity = '0.5';
+    el.style.pointerEvents = 'none';
+  });
+}
+
+function unlockMorningSection() {
+  var banner = document.getElementById('morning-locked-banner');
+  var btn    = document.getElementById('morning-save-btn');
+  var checks = document.getElementById('morning-checks-list');
+
+  if (banner) banner.style.display = 'none';
+  if (btn) {
+    btn.style.display = '';
+    btn.disabled = false;
+    btn.innerHTML = '&#9745; Log Morning Boot to Sheets';
+  }
+  if (checks) {
+    checks.querySelectorAll('.check-item').forEach(function(el) {
+      el.style.opacity = '';
+      el.style.pointerEvents = '';
+    });
+  }
+  var mst = document.getElementById('morning-saved-time');
+  if (mst) mst.style.display = '';
+}
+
+(function restoreMorningLock() {
+  var saved = localStorage.getItem('op_morning_saved') || '';
+  if (saved.indexOf(isoDate(new Date())) === 0) {
+    var parts = saved.split(' ');
+    var timeStr = parts[1] || '';
+    var isLate = parts[2] === 'late';
+    lockMorningSection(timeStr, isLate);
+  }
+})();
+
+// ── STREAK ────────────────────────────────────────────────────────────────────
+function calcStreak(log) {
+  if (!log || log.length === 0) return 0;
+  var activeDates = {};
+  log.forEach(function(e) {
+    if (_dayCounted(e)) activeDates[e.date] = true;   // same rule as the scoreboard and Layer 5
+  });
+  var d = new Date();
+  if (!activeDates[isoDate(d)]) d.setDate(d.getDate() - 1);
+  var count = 0;
+  while (activeDates[isoDate(d)]) { count++; d.setDate(d.getDate() - 1); }
+  return count;
+}
+function updateStreak(log) {
+  document.getElementById('streak-num').textContent = calcStreak(log);
+}
+
+// ── THE RISK REGISTER ────────────────────────────────────────────────────────
+// The behavioural failure modes the system is built against, each with the
+// observable tell and the counter-move. This is EXAMPLE content — the whole
+// point is that you write your own, from your own evidence, before using it.
+var T14_RISKS = [
+  {
+    n:'R1', name:'The escape reflex', status:'open', tag:'',
+    finding:'The root pattern the others all descend from: <em>"when something is painful, make the pain stop rather than move through it."</em> It is not specific to any one distraction &mdash; remove the current escape and the reflex simply finds the next one.',
+    tell:'The discomfort point roughly 90 seconds into difficulty: a stubborn bug, a concept that will not resolve, the urge to switch tabs.',
+    counter:'This one cannot be solved by changing the environment, only by noticing it live. Name it, set a timer, and stay on the exact difficulty ten more minutes. <strong>Those ten minutes are the whole game.</strong>'
+  },
+  {
+    n:'R2', name:'A reachable alternative', status:'planned', tag:'ESCAPE REACHED',
+    finding:'Access, not willpower, tends to be the variable that actually predicts adherence. A long clean run that ends the week a easier alternative becomes reachable again is evidence about the environment, not about character.',
+    tell:'An easier, more rewarding option sitting one click away at the exact moment the real work gets uncomfortable.',
+    counter:'Make it physically inconvenient rather than relying on resisting it. Changing the default costs one decision once; resisting it costs a decision every day.'
+  },
+  {
+    n:'R3', name:'Redesign as avoidance', status:'root', tag:'REDESIGN URGE',
+    finding:'<strong>The most expensive one.</strong> "I need a better system first" is comfortable because a system can be improved at a desk, whereas the actual problem is solved by sitting in discomfort. A plan that was executed for 39 days does not have a design flaw.',
+    tell:'Opening a blank page to draft a better version. Relabelling avoidance as "planning", "researching" or "improving my setup".',
+    counter:'Execute what exists; log the idea for the weekly review. The risk is never the design &mdash; it is day 3 at 08:37 thinking <em>"this could be a little better."</em>'
+  },
+  {
+    n:'R4', name:'The permanence story', status:'open', tag:'POST-MISS SPIRAL',
+    finding:'After a failure there is often no revision, only silence &mdash; and a story that makes restarting feel pointless. <em>"I never recovered"</em> is a prediction disguised as a memory.',
+    tell:'Going quiet after a missed day. Writing off the whole week after one slip.',
+    counter:'One miss is one data point. Never miss twice. Restart the next day without redesigning anything &mdash; the restart <em>is</em> the discipline.'
+  },
+  {
+    n:'R5', name:'The soft-word swap', status:'open', tag:'JUST TODAY',
+    finding:'Raising a hard, accurate word and then substituting a gentler one a beat later. The softer word is easier to live with and commits to nothing, so the problem it named quietly stops being worked on.',
+    tell:'The comfortable synonym arriving one sentence after the true one.',
+    counter:'When the softer word shows up, stop. The first word was the accurate one.'
+  },
+  {
+    n:'R6', name:'The comfortable resolution', status:'open', tag:'REDESIGN URGE',
+    finding:'Trading a comfortable diagnosis for a comfortable resolution. <em>"I just have to face difficulty directly"</em> sounds like insight and commits to nothing &mdash; no action, no time, no place.',
+    tell:'A slogan about behaviour arriving in place of a behaviour. Feels like a breakthrough; specifies nothing.',
+    counter:'Convert it or discard it. Name the moment, the place and the physical next action. Realisations are not progress; a saved artefact is.'
+  },
+  {
+    n:'R7', name:'The reflex finds new exits', status:'open', tag:'PHONE BREACH',
+    finding:'Removing one escape does not remove the reflex that went looking for it. Freed time is quietly reoccupied by the next most available comfort &mdash; the phone, oversleeping, passive scrolling as "rest", or a fresh better plan.',
+    tell:'A new comfort silently occupying the time the old one used to.',
+    counter:'Name the new exit the moment it appears and log it. Define in advance what genuine recovery looks like, so rest is never the same act as escape.'
+  },
+  {
+    n:'R8', name:'Perfection-or-zero', status:'open', tag:'',
+    finding:'The assumption that meaningful progress requires substantial focused work, so a session that cannot be done in full gets postponed instead of shrunk. This is what turns one bad day into a lost week.',
+    tell:'"I only have twenty minutes, so there is no point starting."',
+    counter:'The floor counts, and marking it green is a <strong>win</strong>. A reduced day beats a missed one; a missed one beats an unrecorded one.'
+  }
+];
+
+var T14_STATUS = {
+  open:    { label:'Open',         cls:'risk-open' },
+  planned: { label:'Planned-shut', cls:'risk-planned' },
+  root:    { label:'Root cause',   cls:'risk-root' }
+};
+
+function renderRisks() {
+  var list = document.getElementById('risk-list');
+  if (!list) return;
+  list.innerHTML = '';
+  T14_RISKS.forEach(function(r) {
+    var st = T14_STATUS[r.status] || T14_STATUS.open;
+    var el = document.createElement('div');
+    el.className = 'pillar risk-card';
+    el.onclick = function() { el.classList.toggle('open'); };
+    el.innerHTML =
+      '<div class="pillar-header">' +
+        '<span class="pillar-num">' + r.n + '</span>' +
+        '<h3>' + r.name + '</h3>' +
+        '<span class="risk-status ' + st.cls + '">' + st.label + '</span>' +
+        '<span class="pillar-arrow">&#9660;</span>' +
+      '</div>' +
+      '<div class="pillar-body">' +
+        '<p><strong style="color:#e6edf3;">Finding:</strong> ' + r.finding + '</p>' +
+        '<p><strong style="color:#d29922;">Tell:</strong> ' + r.tell + '</p>' +
+        '<p><strong style="color:#3fb950;">Counter:</strong> ' + r.counter + '</p>' +
+        (r.tag ? '<p style="color:#8b949e;">Log it as <strong style="color:#e8375a;">' + r.tag + '</strong> in the Firewall Log above.</p>' : '') +
+      '</div>';
+    list.appendChild(el);
+  });
+}
+
+// ── THE SEVEN PILLARS (Template 01, Stage 1) ─────────────────────────────────
+var PILLARS = [
+  { id:'builder',   name:'The Builder',
+    say:'I am someone who learns by doing the work myself. I engage hands-on with every step and every line of code until I truly understand it — and I am building, step by step, toward the ability to build.',
+    belief:'I learn by doing the work thoroughly, not by watching it done. Understanding each step now is how I earn the ability to build later.' },
+  { id:'architect', name:'The Architect of Defaults',
+    say:'I am the designer of my own defaults. I engineer my environment so the right action is the easy one, and I do not rely on willpower.',
+    belief:'Willpower was never my missing piece. Whoever controls the environment controls the behavior — so I win by design, not by force.' },
+  { id:'stays',     name:'The One Who Stays',
+    say:'I am someone who stays with hard things. When the work becomes uncomfortable, I stay in the chair instead of escaping.',
+    belief:'The discomfort is the work, not a signal to stop. What stands in the way becomes the way. The reflex to escape is not me — it is a habit I can watch and outlast.' },
+  { id:'metronome', name:'The Metronome',
+    say:'I am regular. I show up every day regardless of mood, energy, or inspiration.',
+    belief:'Consistency beats intensity. A small action done daily compounds; a heroic burst followed by a collapse does not. Showing up is the whole game.' },
+  { id:'reviewer',  name:'The Honest Reviewer',
+    say:'I am honest with myself. I look at my real results as information, not as a verdict on my worth.',
+    belief:'The truth about my progress is data I can use, not a judgment I must fear. I improve what I am willing to look at directly.' },
+  { id:'owner',     name:'The Owner',
+    say:'I am accountable. I take full responsibility for my progress and my results.',
+    belief:'I am the cause of my progress. Circumstances are inputs; my response is mine. Nothing changes until I own it.' },
+  { id:'restarter', name:'The Immediate Restarter',
+    say:'I am someone who restarts immediately. A missed day is a single data point, never the end of the week.',
+    belief:'Perfection was never the standard; recovery speed is. Who I am is defined by how fast I return, not by whether I ever fall.' }
+];
+
+// ── TRACKS (Capsule v06 priority architecture) ─────────────────────────────
+// Finish-first phase: Google carries 30% until the certificate is earned
+// (Courses 6, 7, 8 - 57h), then the split restores to AI 45 / IBM 35 / CCP 20.
+// IBM is reduced to a maintenance slice, not dropped.──
+var TRACKS = [
+  { key:'AI',     label:'AI Eng · 40%' },
+  { key:'Google', label:'Google · 30%' },
+  { key:'CCP',    label:'CCP · 20%' },
+  { key:'IBM',    label:'IBM Data · 10%' }
+];
+
+// ── LAYER 6 — EVOLUTION LADDER ───────────────────────────────────────────────
+// Gates are performance-based and evaluated from the log. Week labels in the
+// source are rough guides only; the gate is what advances a rung.
+var RUNGS = [
+  { name:'STARTER', sub:'one 09:00 block · something saved',
+    desc:'One 09:00–10:30 session, hardest-first, ending with something saved.',
+    gate:'Fired ≥4/5 weekdays with something saved, for two straight weeks.',
+    test:function(w) { return w.goodWeeks >= 2; } },
+  { name:'INTERMEDIATE', sub:'+ second block · stay 15 min',
+    desc:'Add the 13:00–14:00 lunch block on days capacity allows; extend the 90-second rule to stay 15 minutes, not 10.',
+    gate:'Starter gate held two more weeks and the second block ran ≥2×/week without displacing family or sleep.',
+    test:function(w) { return w.goodWeeks >= 4 && w.secondBlockWeeks >= 2; } },
+  { name:'FULL', sub:'both blocks + weekend building',
+    desc:'Both weekday blocks routine; add one relocated weekend building block at home on the personal laptop (Claude-assisted AI building lives here).',
+    gate:'Intermediate held a full month with the weekend block landing consistently.',
+    test:function(w) { return w.goodWeeks >= 8 && w.weekendBlocks >= 4; } },
+  { name:'ADVANCED', sub:'+ weekly project milestone',
+    desc:'Longer sustained focus; attach one scoped weekly project milestone to the block.',
+    gate:'Full version stable and the tracker shows saved artifacts accumulating, not just sessions logged.',
+    test:function() { return false; } }
+];
+
+var currentRung = parseInt(localStorage.getItem('op_rung') || '0');
+
+function renderRungBadge() {
+  var r  = RUNGS[currentRung] || RUNGS[0];
+  var el = document.getElementById('rung-badge');
+  if (el) el.innerHTML = r.name + '<span class="phase-sub">' + r.sub + '</span>';
+}
+renderRungBadge();
+
+// All three commitment slots are live. #1 is the deep-work session's single
+// task (Layer 1); #2 and #3 carry CCP continuity and other-track floors.
+function activeKeys() { return CKEYS; }
+
+// ── LAYER 4 — WEEK METRICS ───────────────────────────────────────────────────
+// Everything the Sunday review measures, computed from the log.
+function weekStats(log, weeksBack) {
+  weeksBack = weeksBack || 0;
+  var end = new Date(); end.setHours(0,0,0,0);
+  end.setDate(end.getDate() - weeksBack * 7);
+  var start = new Date(end); start.setDate(start.getDate() - 6);
+  var startStr = isoDate(start), endStr = isoDate(end);
+
+  var byDate = {};
+  (log || []).forEach(function(e) { byDate[e.date] = e; });
+
+  var fired = 0, weekdays = 0, savedMissing = 0, stayedUsed = 0;
+  var skippedWeekdays = 0, floorDays = 0, secondBlock = 0, weekendBlocks = 0;
+
+  var d = new Date(start);
+  while (isoDate(d) <= endStr) {
+    var ds  = isoDate(d);
+    // Days before the system's first run are out of scope, not misses.
+    if (ds < LOCK_START) { d.setDate(d.getDate() + 1); continue; }
+    var dow = d.getDay();                 // 0 Sun … 6 Sat
+    var isWeekday = dow >= 1 && dow <= 5;
+    var e = byDate[ds];
+    var s = (e && e.session) || {};
+
+    if (isWeekday) {
+      weekdays++;
+      if (s.state === 'full' || s.state === 'relocated' || s.state === 'floor') {
+        fired++;
+        if (!String(s.saved || '').trim()) savedMissing++;
+        if (s.state === 'floor') floorDays++;
+        // '13:00' is the lunch backup (from 2026-09-10); '10:15' is the pre-move backup,
+        // still counted so rows logged before the job change keep feeding the gate.
+        if (s.block === '13:00' || s.block === '10:15') secondBlock++;
+      } else {
+        skippedWeekdays++;
+      }
+    } else if (s.state === 'full' || s.state === 'relocated') {
+      weekendBlocks++;
+    }
+    if (s.stayed === 'used') stayedUsed++;
+    d.setDate(d.getDate() + 1);
+  }
+
+  return {
+    startStr: startStr, endStr: endStr,
+    started: endStr >= LOCK_START,
+    fired: fired, weekdays: weekdays,
+    savedMissing: savedMissing, stayedUsed: stayedUsed,
+    skippedWeekdays: skippedWeekdays, floorDays: floorDays,
+    secondBlock: secondBlock, weekendBlocks: weekendBlocks,
+    // Layer 4's three "it's working" metrics
+    m1: fired >= 4,
+    m2: fired > 0 && savedMissing === 0,
+    m3: stayedUsed >= 1,
+    // Layer 4's three "it's breaking" signs
+    w1: skippedWeekdays >= 2,
+    w2: fired > 0 && savedMissing > 0,
+    w3: fired > 0 && floorDays === fired
+  };
+}
+
+// Rolling history used by the Layer 6 gates.
+function ladderStats(log) {
+  var goodWeeks = 0, secondBlockWeeks = 0, weekendBlocks = 0;
+  for (var i = 0; i < 8; i++) {
+    var w = weekStats(log, i);
+    if (w.m1 && w.m2) goodWeeks++;
+    if (w.secondBlock >= 2) secondBlockWeeks++;
+    weekendBlocks += w.weekendBlocks;
+  }
+  return { goodWeeks: goodWeeks, secondBlockWeeks: secondBlockWeeks, weekendBlocks: weekendBlocks };
+}
+
+function updateWeeklyRate(log) {
+  if (!log) return;
+  var w   = weekStats(log);
+  var num = document.getElementById('fired-num');
+  var pct = document.getElementById('fired-pct');
+  var fill = document.getElementById('weekly-rate-fill');
+  if (!num || !fill) return;
+  num.firstChild.textContent = w.fired + '/5';
+  if (pct) pct.textContent = w.savedMissing ? '  ⚠' : '';
+  var ratio = Math.min(100, Math.round(w.fired / 5 * 100));
+  fill.style.width = ratio + '%';
+  fill.style.background = w.fired >= 4 ? '#1a7f37' : w.fired >= 3 ? '#9a6700' : '#8c1c2a';
+}
+
+// ── COMMITMENTS ───────────────────────────────────────────────────────────────
+var CKEYS    = ['c1','c2','c3'];
+var CDEFAULT = ['[Hardest task — circled]', '[Commitment 2]', '[Commitment 3]'];
+
+function buildCommitments() {
+  var list = document.getElementById('commitments-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (staleFrom !== null) list.appendChild(staleBanner());
+
+  activeKeys().forEach(function(key, i) {
+    var saved    = localStorage.getItem('op_' + key) || CDEFAULT[i];
+    var status   = localStorage.getItem('op_' + key + '_status') || '';
+    var isHard   = localStorage.getItem('op_' + key + '_hardest') === '1';
+
+    var block = document.createElement('div');
+    block.className = 'commit-block';
+
+    var hdr = document.createElement('div');
+    hdr.className = 'commit-header';
+
+    var star = document.createElement('button');
+    star.className = 'hardest-btn' + (isHard ? ' active' : '');
+    star.textContent = '⭐';
+    star.title = 'Mark as hardest task (the 09:00 block)';
+    star.addEventListener('click', function(e) {
+      e.stopPropagation();
+      // Read the state BEFORE clearing, otherwise the test below always passes
+      // and an already-starred commitment can never be un-starred.
+      var wasActive = star.classList.contains('active');
+      CKEYS.forEach(function(k) { localStorage.removeItem('op_' + k + '_hardest'); });
+      document.querySelectorAll('.hardest-btn').forEach(function(b) { b.classList.remove('active'); });
+      if (!wasActive) {
+        star.classList.add('active');
+        localStorage.setItem('op_' + key + '_hardest', '1');
+      }
+    });
+
+    var input = document.createElement('input');
+    input.className = 'commit-name-input';
+    input.value = saved;
+    input.placeholder = 'Commitment ' + (i+1) + '…';
+    input.addEventListener('input', function() {
+      localStorage.setItem('op_' + key, input.value); stampCommits();
+      renderTodayTask();
+    });
+
+    hdr.appendChild(star);
+    hdr.appendChild(input);
+
+    block.appendChild(hdr);
+    block.appendChild(statusButtons(key));
+    list.appendChild(block);
+  });
+}
+
+// The D / M / X row, shared by the Engine editor and the Evening marker so the
+// two views can never disagree. Tapping the active one clears it.
+function statusButtons(key) {
+  var status  = localStorage.getItem('op_' + key + '_status') || '';
+  var btnsRow = document.createElement('div');
+  btnsRow.className = 'status-btns';
+  ['D','M','X'].forEach(function(label, j) {
+    var btn = document.createElement('button');
+    btn.className = 'status-btn'; btn.textContent = label;
+    var sc = ['active-done','active-min','active-miss'][j];
+    if (status === label) btn.classList.add(sc);
+    btn.addEventListener('click', function() {
+      if (localStorage.getItem('op_' + key + '_status') === label) {
+        localStorage.removeItem('op_' + key + '_status');
+      } else {
+        localStorage.setItem('op_' + key + '_status', label); stampCommits();
+      }
+      syncCommitViews();
+    });
+    btnsRow.appendChild(btn);
+  });
+  return btnsRow;
+}
+
+// Evening: names read-only, statuses live. Same keys as the Engine editor.
+function renderEveningCommits() {
+  var list = document.getElementById('evening-commits');
+  if (!list) return;
+  list.innerHTML = '';
+  activeKeys().forEach(function(key, i) {
+    var name = localStorage.getItem('op_' + key) || '';
+    var set  = !!name && name !== CDEFAULT[i];
+    var row  = document.createElement('div');
+    row.className = 'ev-commit-row';
+    var nm = document.createElement('div');
+    nm.className = 'ev-commit-name' + (set ? '' : ' empty');
+    nm.textContent = set ? name : 'Commitment ' + (i + 1) + ' \u2014 not set';
+    row.appendChild(nm);
+    row.appendChild(statusButtons(key));
+    list.appendChild(row);
+  });
+}
+
+function syncCommitViews() {
+  buildCommitments();
+  renderEveningCommits();
+  renderEveningChecks();
+  renderTodayTask();
+}
+
+// Commitment #1 is the deep-work task and therefore the day's non-negotiable.
+function todayTaskName() {
+  var v = localStorage.getItem('op_c1') || '';
+  return (v && v !== CDEFAULT[0]) ? v : '';
+}
+
+function renderTodayTask() {
+  var el = document.getElementById('today-task');
+  if (!el) return;
+  var t = todayTaskName();
+  el.textContent = t || 'No task set \u2014 choose commitment #1 in Engine.';
+  el.className = 'task-display' + (t ? '' : ' empty');
+}
+
+// ── EVENING: the shutdown protocol ticks itself ──────────────────────────────
+// Four of the five steps are facts the app already holds. Deriving them makes
+// the checklist honest (it was 5/5 on every logged day regardless) and turns it
+// into a live "what is still missing" list. Only the bedtime alarm is a tap.
+function eveningAuto() {
+  var st = activeKeys().map(function(k) { return localStorage.getItem('op_' + k + '_status') || ''; });
+  var allMarked = st.every(function(x) { return !!x; });
+  var anyMiss   = st.some(function(x) { return x === 'X'; });
+  var has = function(k) { return !!String(localStorage.getItem(k) || '').trim(); };
+  return [
+    allMarked,
+    !anyMiss || has('op_miss-note'),
+    has('op_tomorrow-plan'),
+    has('op_session-stopped')
+  ];
+}
+
+function renderEveningChecks() {
+  var items = document.querySelectorAll('#evening .check-item.auto');
+  if (!items.length) return;
+  var a = eveningAuto();
+  items.forEach(function(el, i) { el.classList.toggle('checked', !!a[i]); });
+}
+
+// "Where I stopped" was being retyped as tomorrow's line 1 on nine days out of
+// nine. When the plan is empty and a stop point exists, line 1 is seeded from it.
+function prefillTomorrow() {
+  var el = document.getElementById('tomorrow-plan');
+  if (!el) return;
+  var plan = String(localStorage.getItem('op_tomorrow-plan') || '').trim();
+  var stop = String(localStorage.getItem('op_session-stopped') || '').trim();
+  if (plan || !stop) return;
+  var text = '1. ' + stop.split('\n')[0].trim();
+  localStorage.setItem('op_tomorrow-plan', text);
+  el.value = text;
+  autoGrow(el);
+  var hint = document.getElementById('prefill-hint');
+  if (hint) hint.style.display = '';
+  renderEveningChecks();
+}
+function hidePrefillHint() {
+  var hint = document.getElementById('prefill-hint');
+  if (hint) hint.style.display = 'none';
+}
+// The banner itself: names the date, explains what was already cleared, and
+// offers the two honest choices — start fresh, or adopt them as today's.
+function staleBanner() {
+  var wrap = document.createElement('div');
+  wrap.className = 'stale-banner';
+
+  var kept = (staleNames || []).filter(function(v, i) { return v && v !== CDEFAULT[i]; });
+
+  var txt = document.createElement('div');
+  txt.className = 'stale-text';
+  txt.innerHTML = 'Cleared <strong>' + kept.length + '</strong> commitment' +
+    (kept.length === 1 ? '' : 's') + ' from <strong>' +
+    (staleFrom ? esc(staleFrom) : 'an earlier session') +
+    '</strong> &mdash; the app had not been opened since. Set today&rsquo;s tasks below.' +
+    (kept.length ? '<div class="stale-list">' + kept.map(esc).join(' &middot; ') + '</div>' : '');
+  wrap.appendChild(txt);
+
+  var row = document.createElement('div');
+  row.className = 'stale-actions';
+
+  var restore = document.createElement('button');
+  restore.className = 'stale-btn';
+  restore.textContent = 'Restore them';
+  restore.onclick = function() {
+    (staleNames || []).forEach(function(v, i) {
+      if (v) localStorage.setItem('op_' + CKEYS[i], v);
+    });
+    stampCommits();
+    staleFrom = null; staleNames = null;
+    syncCommitViews();
+    showToast('Restored');
+  };
+
+  var ok = document.createElement('button');
+  ok.className = 'stale-btn primary';
+  ok.textContent = 'Got it';
+  ok.onclick = function() {
+    stampCommits();
+    staleFrom = null; staleNames = null;
+    syncCommitViews();
+  };
+
+  row.appendChild(ok);
+  row.appendChild(restore);
+  wrap.appendChild(row);
+  return wrap;
+}
+
+// ── STALE COMMITMENT GUARD ───────────────────────────────────────────────────
+// Commitments used to live in localStorage with no date attached, so an app
+// left unopened for weeks reopened showing weeks-old tasks — and, worse, their
+// old D/M/X marks, which snapshot() would write straight into today's log.
+// op_commit_date records the day the current commitments are FOR.
+function commitDate()  { return localStorage.getItem('op_commit_date') || ''; }
+
+// Only ever moves the stamp forward, so editing tomorrow's plan tonight does
+// not drag the stamp back to today.
+function stampCommits(d) {
+  d = d || isoDate(new Date());
+  var cur = commitDate();
+  if (!cur || cur < d) localStorage.setItem('op_commit_date', d);
+}
+
+function commitsAreStale() {
+  var named = CKEYS.some(function(k, i) {
+    var v = localStorage.getItem('op_' + k);
+    return v && v !== CDEFAULT[i];
+  });
+  if (!named) return false;
+  var stamp = commitDate();
+  if (!stamp) return true;                       // written before stamping existed
+  return stamp < isoDate(new Date());
+}
+
+function clearCommitMarks() {
+  CKEYS.forEach(function(k) {
+    localStorage.removeItem('op_' + k + '_status');
+    localStorage.removeItem('op_' + k + '_hardest');
+    localStorage.removeItem('op_' + k + '_window');   // legacy key
+  });
+}
+
+var staleFrom  = null;
+var staleNames = null;
+(function checkStaleCommitments() {
+  if (!commitsAreStale()) return;
+  staleFrom  = commitDate();     // '' when the data predates stamping
+  staleNames = CKEYS.map(function(k) { return localStorage.getItem('op_' + k) || ''; });
+  CKEYS.forEach(function(k) { localStorage.removeItem('op_' + k); });
+  clearCommitMarks();
+})();
+
+buildCommitments();
+
+// ── STARTUP SYNC — pull commitment names from server on load ──────────────────
+var logLoading = true;
+// Set when the Firewall tab asks for the chain while the startup fetch is still
+// in flight; the fetch flushes it so the chain isn't left permanently blank.
+var chainPending = false;
+
+function flushChainPending() {
+  if (!chainPending) return;
+  chainPending = false;
+  if (cachedLog) {
+    renderChain(cachedLog);
+    renderFailureProtocol(cachedLog);
+    renderRungs(cachedLog);
+  } else {
+    initFirewall();
+  }
+}
+
+google.script.run
+  .withSuccessHandler(function(result) {
+    try {
+      var log = JSON.parse(result);
+      cachedLog = log;
+      if (!log || log.length === 0) { logLoading = false; flushChainPending(); return; }
+      var changed = false;
+
+      var todayEntry = null;
+      for (var li = 0; li < log.length; li++) {
+        if (log[li].date === isoDate(new Date())) { todayEntry = log[li]; break; }
+      }
+
+      var hasEmpty = CKEYS.some(function(key, i) {
+        var local = localStorage.getItem('op_' + key);
+        return !local || local === CDEFAULT[i];
+      });
+
+      if (hasEmpty) {
+        if (todayEntry && todayEntry.commitments && todayEntry.commitments.length > 0) {
+          todayEntry.commitments.forEach(function(c, i) {
+            if (CKEYS[i] && c.name && c.name !== CDEFAULT[i]) {
+              localStorage.setItem('op_' + CKEYS[i], c.name);
+              changed = true;
+            }
+          });
+        } else {
+          // Only yesterday's plan may seed today. Without this bound the loop
+          // walked the whole log and resurrected the most recent entry with any
+          // plan at all — so a log last touched in June re-seeded June's tasks
+          // on every load, and "clear and start fresh" could never win.
+          var yd = new Date(); yd.setDate(yd.getDate() - 1);
+          var yesterdayISO = isoDate(yd);
+          var source = null;
+          for (var si = 0; si < log.length; si++) {
+            if (log[si].date < yesterdayISO) break;      // log is newest-first
+            if (String(log[si].tomorrowPlan || '').trim() ||
+                (log[si].commitments || []).length > 0) {
+              source = log[si]; break;
+            }
+          }
+          if (source) {
+            var plan = String(source.tomorrowPlan || '');
+            var planLines = plan.split('\n')
+              .map(function(l) { return l.replace(/^\s*\d+[\.\)\-]\s+/, '').replace(/^\s*\*?\s*/, '').trim(); })
+              .filter(function(l) { return l.length > 0; });
+
+            if (planLines.length > 0) {
+              CKEYS.forEach(function(key, i) {
+                var local = localStorage.getItem('op_' + key);
+                if ((!local || local === CDEFAULT[i]) && planLines[i]) {
+                  localStorage.setItem('op_' + key, planLines[i]);
+                  changed = true;
+                }
+              });
+            } else {
+              var comms = source.commitments || [];
+              CKEYS.forEach(function(key, i) {
+                var local = localStorage.getItem('op_' + key);
+                if ((!local || local === CDEFAULT[i]) && comms[i] && comms[i].name && comms[i].name !== CDEFAULT[i]) {
+                  localStorage.setItem('op_' + key, comms[i].name);
+                  changed = true;
+                }
+              });
+            }
+          }
+        }
+      }
+
+      if (changed) { stampCommits(); syncCommitViews(); }
+      updateStreak(log);
+      updateWeeklyRate(log);
+    } catch(e) {}
+    logLoading = false;
+    flushChainPending();
+    renderScore();
+    renderCalisthenics();
+  })
+  .withFailureHandler(function(){ logLoading = false; flushChainPending(); })
+  .getLog();
+
+// ── TEXT AREAS ────────────────────────────────────────────────────────────────
+// One list drives restore-on-load, persistence and clearDay(). Every field here
+// is typed once: non-neg, one-task and daily-note were retired on 2026-09-18
+// (non-neg always equalled commitment #1, one-task was never saved, daily-note
+// duplicated the verdict).
+var TEXT_IDS = ['miss-note','tomorrow-plan','verdict','session-saved','session-stopped','session-feeling'];
+TEXT_IDS.forEach(function(id) {
+  var el = document.getElementById(id);
+  el.value = localStorage.getItem('op_' + id) || '';
+  el.addEventListener('input', function() {
+    localStorage.setItem('op_' + id, el.value);
+    if (id === 'tomorrow-plan') hidePrefillHint();
+    renderEveningChecks();          // four of the shutdown ticks derive from these
+  });
+});
+// Keys the retired fields left behind, and the two track pills.
+['op_non-neg','op_one-task','op_daily-note','op_sess_track','op_task_track'].forEach(function(k) {
+  localStorage.removeItem(k);
+});
+
+// ── SNAPSHOT ──────────────────────────────────────────────────────────────────
+function snapshot() {
+  var d = new Date();
+  renderEveningChecks();          // make sure the derived ticks are current before reading them
+  var mc = []; document.querySelectorAll('#morning .check-item').forEach(function(el){ mc.push(el.classList.contains('checked')); });
+  var ec = []; document.querySelectorAll('#evening .check-item').forEach(function(el){ ec.push(el.classList.contains('checked')); });
+  var commitments = activeKeys().map(function(key, i) {
+    return {
+      name:    localStorage.getItem('op_' + key)           || CDEFAULT[i],
+      status:  localStorage.getItem('op_' + key + '_status') || '',
+      hardest: localStorage.getItem('op_' + key + '_hardest') === '1'
+    };
+  });
+  var doneCount = commitments.filter(function(c){ return c.status === 'D'; }).length;
+  var minCount  = commitments.filter(function(c){ return c.status === 'M'; }).length;
+  var anyMiss   = commitments.some(function(c){ return c.status === 'X'; });
+  var anyMarked = commitments.some(function(c){ return c.status; });
+
+  var level;
+  if (doneCount === commitments.length)  level = 'full';
+  else if (anyMiss || (!anyMarked))      level = 'miss';
+  else                                   level = 'min';
+
+  return {
+    date:          isoDate(d),
+    dateLabel:     dateLabel(d),
+    morningChecks: mc,
+    eveningChecks: ec,
+    nonNeg:        todayTaskName(),                  // commitment #1 IS the non-negotiable
+    missNote:      localStorage.getItem('op_miss-note')      || '',
+    tomorrowPlan:  localStorage.getItem('op_tomorrow-plan')  || '',
+    verdict:       localStorage.getItem('op_verdict')        || '',
+    dailyNote:     '',                                // folded into the verdict
+    rung:          currentRung + 1,
+    phase:         currentRung + 1,
+    commitments:   commitments,
+    score:         doneCount,
+    total:         commitments.length,
+    level:         level,
+    review:        {},                                // the Review tab was folded into Evening
+    session:       collectSession(),
+    backlog:       loadBacklog(),
+    pillar:        todayPillarId()
+  };
+}
+
+// ── SAVE & RESET ──────────────────────────────────────────────────────────────
+function saveAndReset() {
+  if (!confirm('Save today\'s log and reset for tomorrow?')) return;
+  var btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving to Google Sheets...';
+  showToast('Saving…', 'saving');
+
+  var entry = snapshot();
+  google.script.run
+    .withSuccessHandler(function(result) {
+      btn.disabled = false;
+      btn.innerHTML = '&#10003; Save to Log &amp; Reset for Tomorrow';
+      var res = JSON.parse(result);
+      if (res.success) {
+        showToast('Saved to Google Sheets ✓');
+        clearDay();
+      } else {
+        showToast('Save failed: ' + (res.error || 'unknown error'), 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '&#10003; Save to Log &amp; Reset for Tomorrow';
+      showToast('Error: ' + err.message, 'error');
+    })
+    .saveEntry(JSON.stringify(entry));
+}
+
+function resetDay() {
+  if (!confirm('Reset without saving to log?')) return;
+  clearDay();
+}
+
+function clearDay() {
+  var plan = localStorage.getItem('op_tomorrow-plan') || '';
+  var lines = plan.split('\n')
+    .map(function(l) { return l.replace(/^\s*\d+[\.\)\-]\s+/, '').trim(); })
+    .filter(function(l) { return l.length > 0; });
+
+  var _t = new Date(); _t.setDate(_t.getDate() + 1);
+  localStorage.setItem('op_commit_date', isoDate(_t));
+  staleFrom = null;
+
+  CKEYS.forEach(function(k, i) {
+    localStorage.removeItem('op_' + k + '_status');
+    localStorage.removeItem('op_' + k + '_window');
+    localStorage.removeItem('op_' + k + '_hardest');
+    if (lines[i]) {
+      localStorage.setItem('op_' + k, lines[i]);
+    } else {
+      localStorage.removeItem('op_' + k);
+    }
+  });
+
+  TEXT_IDS.forEach(function(id) {
+    localStorage.removeItem('op_' + id);
+    var el = document.getElementById(id);
+    el.value = '';
+    el.style.height = 'auto';
+  });
+  hidePrefillHint();
+  localStorage.removeItem('op_morning_checks');
+  localStorage.removeItem('op_evening_checks');
+  localStorage.removeItem('op_checks_date');
+  localStorage.removeItem('op_morning_saved');
+  document.querySelectorAll('.check-item').forEach(function(el){ el.classList.remove('checked'); });
+  var mst = document.getElementById('morning-saved-time');
+  if (mst) mst.textContent = '';
+  var todayKey = isoDate(new Date());
+  localStorage.removeItem('op_pillar_' + todayKey);
+
+  // Deep-work session + skills backlog reset for the new day
+  ['op_sess_state','op_sess_block','op_sess_stayed','op_backlog']
+    .forEach(function(k) { localStorage.removeItem(k); });
+  initSegRows();
+  renderPillarPills();
+  renderBacklog();
+  var sm = document.getElementById('session-saved-msg');
+  if (sm) sm.textContent = '';
+
+  unlockMorningSection();
+
+  syncCommitViews();
+  document.getElementById('date-display').textContent = dateLabel(new Date());
+}
+
+// ── LOG ───────────────────────────────────────────────────────────────────────
+var cachedLog = null;
+var logLastLoaded = 0;
+
+function loadLog() {
+  if (cachedLog && Date.now() - logLastLoaded < 30000) {
+    renderLog(cachedLog);
+    return;
+  }
+
+  var loadingEl = document.getElementById('log-loading');
+  var listEl    = document.getElementById('log-list');
+  var emptyEl   = document.getElementById('log-empty');
+
+  loadingEl.style.display = 'block';
+  listEl.innerHTML = '';
+  emptyEl.style.display = 'none';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      loadingEl.style.display = 'none';
+      logLastLoaded = Date.now();
+      try {
+        var log = JSON.parse(result);
+        cachedLog = log;
+        renderLog(log);
+        updateWeeklyRate(log);
+        updateStreak(log);
+        renderScore();
+        renderCalisthenics();
+      } catch(e) {
+        showToast('Could not load log', 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      loadingEl.style.display = 'none';
+      showToast('Could not load log: ' + err.message, 'error');
+    })
+    .getLog();
+}
+
+function renderLog(log) {
+  var listEl  = document.getElementById('log-list');
+  var emptyEl = document.getElementById('log-empty');
+  var statsEl = document.getElementById('log-stats');
+  listEl.innerHTML = '';
+
+  if (!log || log.length === 0) {
+    emptyEl.style.display = 'block';
+    statsEl.textContent = '—';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  var full = log.filter(function(e){ return e.level === 'full'; }).length;
+  statsEl.textContent = log.length + ' entries  •  ' + full + ' full days  •  ' +
+    Math.round(full/log.length*100) + '% execution';
+
+  log.forEach(function(entry) {
+    var card = document.createElement('div');
+    card.className = 'log-card';
+    var dotClass   = entry.level === 'full' ? 'verdict-full' : entry.level === 'miss' ? 'verdict-miss' : 'verdict-min';
+    var scoreClass = entry.level === 'full' ? 'score-full'   : entry.level === 'miss' ? 'score-miss'   : 'score-min';
+
+    var deleteBtn = document.createElement('button');
+    deleteBtn.className = 'log-delete-btn';
+    deleteBtn.textContent = 'Delete this entry';
+    deleteBtn.setAttribute('data-date', entry.date);
+    deleteBtn.addEventListener('click', function() {
+      deleteEntry(this.getAttribute('data-date'));
+    });
+
+    card.innerHTML =
+      '<div class="log-card-header" onclick="this.parentElement.classList.toggle(\'open\')">' +
+        '<div class="log-verdict-dot ' + dotClass + '"></div>' +
+        '<div class="log-date">' + esc(entry.dateLabel) + '</div>' +
+        '<span class="log-score ' + scoreClass + '">' + entry.score + '/' + entry.total + ' D</span>' +
+        '<span class="log-arrow">&#9660;</span>' +
+      '</div>' +
+      '<div class="log-card-body">' + buildBody(entry) + '</div>';
+
+    card.querySelector('.log-card-body').appendChild(deleteBtn);
+    listEl.appendChild(card);
+  });
+}
+
+function buildBody(e) {
+  // Must mirror the checklists in #morning and #evening, in order.
+  var mLabels = [
+    'Feet on the floor in the 07:15–07:20 window',
+    'Calisthenics 07:20–07:35',
+    'Read the seven declarations',
+    'Named the pillar · stated the tasks'
+  ];
+  var eLabels = [
+    'Every commitment marked D/M/X',
+    'Miss root cause written',
+    'Tomorrow\'s tasks chosen — materials laid out',
+    'Where I stopped / what\'s next written',
+    'Shutdown alarm · bedtime set'
+  ];
+  var html = '';
+
+  // The deep-work session — the system's central record (Layer 3)
+  var s = e.session || {};
+  if (s.state) {
+    var stateLbl = { full:'Full block', relocated:'Relocated', floor:'Floor only', skipped:'Skipped' }[s.state] || s.state;
+    var stayLbl  = { used:'stayed', 'not-needed':'never fired', escaped:'escaped' }[s.stayed] || '—';
+    html += '<div class="log-section-title">Deep-Work Session</div>';
+    html += '<div class="log-check-row"><div class="dot ' +
+            (s.state === 'skipped' ? 'dot-miss' : 'dot-done') + '"></div><span>' +
+            esc(stateLbl) + (s.block ? ' · ' + esc(s.block) : '') +
+            (s.track ? ' · ' + esc(s.track) : '') + ' · 90-sec rule: ' + esc(stayLbl) + '</span></div>';
+    html += s.saved
+      ? '<div class="log-text-block">' + esc(s.saved) + '</div>'
+      : '<div class="log-text-empty">Nothing saved — the session went through the motions</div>';
+    if (s.feeling) {
+      html += '<div class="log-section-title">The Feeling</div><div class="log-text-block">' + esc(s.feeling) + '</div>';
+    }
+    if (s.stoppedAt) {
+      html += '<div class="log-section-title">Where I Stopped</div><div class="log-text-block">' + esc(s.stoppedAt) + '</div>';
+    }
+  }
+
+  if ((e.backlog || []).length) {
+    html += '<div class="log-section-title">Skills Backlog</div>';
+    e.backlog.forEach(function(b) {
+      html += '<div class="log-check-row"><div class="dot dot-miss"></div><span>' + esc(b) + '</span></div>';
+    });
+  }
+
+  html += '<div class="log-section-title">Boot Sequence</div>';
+  (e.morningChecks || []).forEach(function(checked, i) {
+    html += '<div class="log-check-row"><div class="dot ' + (checked?'dot-done':'dot-miss') + '"></div><span>' + (mLabels[i]||'Step '+(i+1)) + '</span></div>';
+  });
+
+  html += '<div class="log-section-title">Non-Negotiable</div>';
+  html += e.nonNeg ? '<div class="log-text-block">' + esc(e.nonNeg) + '</div>' : '<div class="log-text-empty">Not set</div>';
+
+  html += '<div class="log-section-title">Commitments</div>';
+  (e.commitments || []).forEach(function(c) {
+    var bc = 'badge-' + (c.status||'').toLowerCase();
+    var lbl = c.status==='D'?'DONE':c.status==='M'?'MIN':c.status==='X'?'MISS':'—';
+    html += '<div class="log-commitment-row"><span class="log-commitment-name">' + esc(c.name) + '</span><span class="log-status-badge ' + bc + '">' + lbl + '</span></div>';
+  });
+
+  if (e.missNote) {
+    html += '<div class="log-section-title">Root Cause</div><div class="log-text-block">' + esc(e.missNote) + '</div>';
+  }
+
+  html += '<div class="log-section-title">Shutdown Protocol</div>';
+  (e.eveningChecks || []).forEach(function(checked, i) {
+    html += '<div class="log-check-row"><div class="dot ' + (checked?'dot-done':'dot-miss') + '"></div><span>' + (eLabels[i]||'Step '+(i+1)) + '</span></div>';
+  });
+
+  if (e.tomorrowPlan) {
+    html += '<div class="log-section-title">Tomorrow\'s Top 3</div><div class="log-text-block">' + esc(e.tomorrowPlan) + '</div>';
+  }
+  if (e.verdict) {
+    html += '<div class="log-section-title">Verdict</div><div class="log-text-block">' + esc(e.verdict) + '</div>';
+  }
+  if (e.dailyNote) {
+    html += '<div class="log-section-title">Daily Note</div><div class="log-text-block">' + esc(e.dailyNote) + '</div>';
+  }
+  return html;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function deleteEntry(date) {
+  if (!confirm('Delete entry for ' + date + '?')) return;
+  showToast('Deleting…', 'saving');
+  logLastLoaded = 0;
+  google.script.run
+    .withSuccessHandler(function(result){
+      var res = {};
+      try { res = JSON.parse(result); } catch(e) {}
+      if (res.success) {
+        showToast('Entry deleted');
+        loadLog();
+      } else {
+        showToast('Delete failed: ' + (res.error || 'entry not found'), 'error');
+      }
+    })
+    .withFailureHandler(function(e){ showToast('Delete failed: ' + e.message, 'error'); })
+    .deleteEntry(date);
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function exportLog() {
+  if (!cachedLog || cachedLog.length === 0) { showToast('Load the Log tab first', 'error'); return; }
+  var text = 'THE OPERATOR — DAILY LOG\nExported: ' + dateLabel(new Date()) + '\n' + '='.repeat(50) + '\n\n';
+  cachedLog.forEach(function(e) {
+    text += '=== ' + e.dateLabel + ' ===\n';
+    text += 'Score: ' + e.score + '/' + e.total + '\n\n';
+    if (e.nonNeg) text += 'NON-NEGOTIABLE:\n' + e.nonNeg + '\n\n';
+    text += 'COMMITMENTS:\n';
+    (e.commitments||[]).forEach(function(c) {
+      var s = c.status==='D'?'✓ DONE':c.status==='M'?'~ MIN':c.status==='X'?'✗ MISS':'—';
+      text += '  ' + s + '  ' + c.name + '\n';
+    });
+    text += '\n';
+    var ss = e.session || {};
+    if (ss.state)      text += 'SESSION: ' + ss.state + (ss.block ? ' @ ' + ss.block : '') + (ss.stayed ? ' · 90s: ' + ss.stayed : '') + '\n';
+    if (ss.saved)      text += 'SAVED:\n'           + ss.saved      + '\n\n';
+    if (ss.stoppedAt)  text += 'STOPPED AT:\n'      + ss.stoppedAt  + '\n\n';
+    if (e.missNote)    text += 'ROOT CAUSE:\n'      + e.missNote    + '\n\n';
+    if (e.tomorrowPlan)text += "TOMORROW'S TOP 3:\n"+ e.tomorrowPlan+ '\n\n';
+    if (e.verdict)     text += 'VERDICT:\n'         + e.verdict     + '\n\n';
+    text += '─'.repeat(40) + '\n\n';
+  });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){ showToast('Copied to clipboard (' + cachedLog.length + ' entries)'); }).catch(function(){ fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('Copied to clipboard (' + cachedLog.length + ' entries)');
+  } catch(e) {
+    showToast('Could not copy — try a different browser', 'error');
+  }
+  document.body.removeChild(ta);
+}
+
+// ── LAYER 5 — FAILURE PROTOCOL ───────────────────────────────────────────────
+// Replaces the old 4-level escalation ladder (self-monitoring → financial stake
+// → public accountability), which has no basis in the forged system. Template 14
+// found that ACCESS, not motivation, was always the variable — so the real
+// ladder is the miss-recovery protocol, not a stakes ladder.
+function consecutiveMisses(log) {
+  var byDate = {}, earliest = null;
+  (log || []).forEach(function(e) {
+    byDate[e.date] = e;
+    if (!earliest || e.date < earliest) earliest = e.date;
+  });
+  // Never count days before the system started, or before the log begins —
+  // otherwise a fresh log reads as a month of consecutive misses.
+  var floorDate = (earliest && earliest > LOCK_START) ? earliest : LOCK_START;
+
+  var d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - 1);          // today isn't a miss until it's over
+  var n = 0;
+  for (var i = 0; i < 60; i++) {
+    var ds  = isoDate(d);
+    if (ds < floorDate) break;
+    var dow = d.getDay();
+    if (dow >= 1 && dow <= 5) {          // weekdays only — the system is 5×/week
+      var e = byDate[ds];
+      var s = (e && e.session) || {};
+      var fired = s.state === 'full' || s.state === 'relocated' || s.state === 'floor';
+      var anyWork = !!(e && (e.commitments || []).some(function(c) {
+        return c.status === 'D' || c.status === 'M';
+      }));
+      if (fired || anyWork) break;
+      n++;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return n;
+}
+
+function renderFailureProtocol(log) {
+  var badge  = document.getElementById('fp-badge');
+  var name   = document.getElementById('fp-name');
+  var days   = document.getElementById('fp-days');
+  var action = document.getElementById('fp-action');
+  var dots   = document.getElementById('fp-dots');
+  if (!badge) return;
+
+  var n = consecutiveMisses(log);
+  var state;
+  if (n === 0) {
+    state = { badge:'ON TRACK', name:'No consecutive misses', days:'The chain is intact.',
+      action:'Nothing to recover. Fire the session today and keep it that way.', cls:'' };
+  } else if (n === 1) {
+    state = { badge:'1 MISS', name:'One data point', days:'One weekday missed.',
+      action:'Do the minimum-viable floor today. Do NOT open the plan to redesign. One miss is one data point.', cls:'warn' };
+  } else if (n === 2) {
+    state = { badge:'2 IN A ROW', name:'The only real failure', days:'Two consecutive weekdays missed.',
+      action:'Fire the smallest version today and mark it green. Add nothing, rebuild nothing.', cls:'danger' };
+  } else {
+    state = { badge:n + ' IN A ROW', name:'Reset required', days:n + ' consecutive weekdays missed.',
+      action:'Restart at the floor for the whole next week — no upgrades — and bring it to the Sunday review as evidence. The reset is EXECUTING the existing system, never building a new one.', cls:'danger' };
+  }
+
+  badge.textContent  = state.badge;
+  name.textContent   = state.name;
+  days.textContent   = state.days;
+  action.textContent = state.action;
+  action.className   = 'fp-action' + (state.cls ? ' ' + state.cls : '');
+
+  var lit = Math.min(n, 3);
+  for (var i = 0; i < dots.children.length; i++) {
+    dots.children[i].classList.toggle('active', i < Math.max(1, lit));
+  }
+}
+
+// ── LAYER 6 — RUNG LADDER RENDER ─────────────────────────────────────────────
+function renderRungs(log) {
+  var list = document.getElementById('rung-list');
+  if (!list) return;
+  list.innerHTML = '';
+  var stats = ladderStats(log);
+
+  RUNGS.forEach(function(r, i) {
+    var row = document.createElement('div');
+    var cls = 'rung-row';
+    var tag, tagCls;
+    if (i === currentRung)      { cls += ' current'; tag = 'Current'; tagCls = 'now'; }
+    else if (i < currentRung)   { cls += ' cleared'; tag = 'Cleared'; tagCls = 'cleared'; }
+    else                        { tag = 'Locked';  tagCls = 'locked'; }
+    row.className = cls;
+
+    var gateMet = (i === currentRung) && r.test(stats);
+    row.innerHTML =
+      '<div class="rung-head">' +
+        '<div class="rung-name">' + r.name + '</div>' +
+        '<span class="rung-tag ' + tagCls + '">' + tag + '</span>' +
+      '</div>' +
+      '<div class="rung-desc">' + r.desc + '</div>' +
+      '<div class="rung-gate"><strong>Gate:</strong> ' + r.gate + '</div>';
+
+    if (i === currentRung && i < RUNGS.length - 1) {
+      var prog = document.createElement('div');
+      prog.className = 'rung-gate';
+      prog.innerHTML = '<strong>Evidence:</strong> ' + stats.goodWeeks + ' qualifying week(s) · ' +
+        stats.secondBlockWeeks + ' week(s) with the second block ≥2× · ' +
+        stats.weekendBlocks + ' weekend block(s).';
+      row.appendChild(prog);
+
+      var btn = document.createElement('button');
+      btn.className = 'esc-change-btn escalate';
+      btn.style.marginTop = '12px';
+      btn.style.width = '100%';
+      btn.textContent = gateMet ? '↑ Gate met — advance to ' + RUNGS[i+1].name : '↑ Gate not met — stay on this rung';
+      btn.disabled = !gateMet;
+      btn.style.opacity = gateMet ? '1' : '0.45';
+      btn.onclick = function() {
+        if (!gateMet) return;
+        currentRung = i + 1;
+        localStorage.setItem('op_rung', currentRung);
+        renderRungBadge();
+        renderRungs(log);
+        showToast('Advanced to ' + RUNGS[currentRung].name);
+      };
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  });
+}
+
+// ── THE 14-DAY LOCK ──────────────────────────────────────────────────────────
+function renderLockStatus() {
+  var el = document.getElementById('lock-status');
+  if (!el) return;
+  var parts = LOCK_START.split('-');
+  var start = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var today = new Date(); today.setHours(0,0,0,0);
+  var day   = Math.floor((today - start) / 86400000) + 1;
+
+  if (day < 1) {
+    el.className = 'lock-status';
+    el.textContent = 'Lock begins ' + LOCK_START + ' — ' + (1 - day) + ' day(s) from now.';
+  } else if (day <= LOCK_DAYS) {
+    el.className = 'lock-status active';
+    el.textContent = 'LOCKED — day ' + day + ' of ' + LOCK_DAYS + '. Parameter tweaks at review only. No rebuilds.';
+  } else {
+    el.className = 'lock-status';
+    el.textContent = 'Lock cleared on day ' + LOCK_DAYS + ' (now day ' + day + '). Changes still happen at a review point, on evidence — never mid-week, on mood.';
+  }
+}
+
+// ── FIREWALL LOG ──────────────────────────────────────────────────────────────
+var FW_TAGS = {
+  'ALARM LOST':      'fw-tag-alarm',
+  'PHONE BREACH':    'fw-tag-phone',
+  'REDESIGN URGE':   'fw-tag-redesign',
+  'POST-MISS SPIRAL':'fw-tag-spiral',
+  'JUST TODAY':      'fw-tag-excuse'
+};
+
+function loadFirewallLog() {
+  try { return JSON.parse(localStorage.getItem('op_fw_log') || '[]'); }
+  catch(e) { return []; }
+}
+
+function renderFirewallLog() {
+  var log     = loadFirewallLog();
+  var listEl  = document.getElementById('fw-log-list');
+  var emptyEl = document.getElementById('fw-empty');
+  listEl.innerHTML = '';
+  if (log.length === 0) {
+    emptyEl.style.display = 'block'; return;
+  }
+  emptyEl.style.display = 'none';
+  log.slice(0, 20).forEach(function(entry) {
+    var row = document.createElement('div');
+    row.className = 'fw-entry';
+    var d   = new Date(entry.ts);
+    var timeStr = d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] +
+                  ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    var tagClass = FW_TAGS[entry.type] || 'fw-tag-spiral';
+    var tagSpan = document.createElement('span');
+    tagSpan.className = 'fw-tag ' + tagClass;
+    tagSpan.textContent = entry.type;
+    var timeSpan = document.createElement('span');
+    timeSpan.className = 'fw-time';
+    timeSpan.textContent = timeStr;
+    row.appendChild(tagSpan);
+    row.appendChild(timeSpan);
+    listEl.appendChild(row);
+  });
+}
+
+function logFirewall(type) {
+  var log = loadFirewallLog();
+  log.unshift({ type: type, ts: new Date().toISOString() });
+  if (log.length > 50) log = log.slice(0, 50);
+  localStorage.setItem('op_fw_log', JSON.stringify(log));
+  renderFirewallLog();
+  showToast(type + ' logged in Firewall');
+}
+
+function clearFirewallLog() {
+  if (!confirm('Clear the entire Firewall Log?')) return;
+  localStorage.removeItem('op_fw_log');
+  renderFirewallLog();
+}
+
+// ── 30-DAY CHAIN ──────────────────────────────────────────────────────────────
+function renderChain(log) {
+  var gridEl   = document.getElementById('chain-grid');
+  var emptyEl  = document.getElementById('chain-empty');
+  gridEl.innerHTML = '';
+  renderEvidenceDay(log);
+
+  if (!log || log.length === 0) {
+    emptyEl.style.display = 'block'; return;
+  }
+  emptyEl.style.display = 'none';
+
+  var map = {};
+  log.forEach(function(e) { map[e.date] = e.level; });
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayStr = isoDate(today);
+
+  for (var i = 29; i >= 0; i--) {
+    var d    = new Date(today); d.setDate(d.getDate() - i);
+    var ds   = isoDate(d);
+    var cell = document.createElement('div');
+    cell.className = 'chain-cell';
+
+    var level = map[ds];
+    if      (level === 'full') cell.classList.add('done');
+    else if (level === 'min')  cell.classList.add('min');
+    else if (level === 'miss') cell.classList.add('miss');
+    else                       cell.classList.add('empty');
+
+    if (ds === todayStr) cell.classList.add('today');
+    cell.textContent = d.getDate();
+    gridEl.appendChild(cell);
+  }
+}
+// Day N of the 30-day evidence window, counted from the system's first run,
+// plus how many of those days actually produced evidence.
+function renderEvidenceDay(log) {
+  var el = document.getElementById('chain-day');
+  if (!el) return;
+  var parts = LOCK_START.split('-');
+  var start = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var today = new Date(); today.setHours(0,0,0,0);
+  var day   = Math.floor((today - start) / 86400000) + 1;
+
+  var proof = 0;
+  (log || []).forEach(function(e) {
+    if (e.date < LOCK_START) return;
+    var s = e.session || {};
+    var fired = s.state === 'full' || s.state === 'relocated' || s.state === 'floor';
+    var work  = (e.commitments || []).some(function(c) { return c.status === 'D' || c.status === 'M'; });
+    if (fired || work) proof++;
+  });
+
+  if (day < 1) {
+    el.textContent = 'Window opens ' + LOCK_START + ' — ' + (1 - day) + ' day(s) to go';
+  } else if (day <= 30) {
+    el.textContent = 'Day ' + day + ' of 30 · ' + proof + ' day(s) of evidence banked';
+  } else {
+    el.textContent = 'Window complete · ' + proof + ' day(s) of evidence banked';
+  }
+}
+
+// ── PILLARS · DECLARATIONS · TODAY'S PILLAR ──────────────────────────────────
+function renderDeclarations() {
+  var body = document.getElementById('declarations-body');
+  if (!body) return;
+  body.innerHTML = PILLARS.map(function(p) {
+    return '<div class="declaration">' +
+             '<div class="declaration-name">' + esc(p.name) + '</div>' +
+             esc(p.say) +
+           '</div>';
+  }).join('');
+}
+
+function renderPillarPills() {
+  var wrap = document.getElementById('pillar-pills');
+  if (!wrap) return;
+  var today = isoDate(new Date());
+  var sel   = localStorage.getItem('op_pillar_' + today) || '';
+  wrap.innerHTML = '';
+  PILLARS.forEach(function(p) {
+    var b = document.createElement('button');
+    b.className = 'pillar-pill' + (sel === p.id ? ' active' : '');
+    b.textContent = p.name.replace(/^The /, '');
+    b.onclick = function() {
+      var key = 'op_pillar_' + isoDate(new Date());
+      if (localStorage.getItem(key) === p.id) localStorage.removeItem(key);
+      else localStorage.setItem(key, p.id);
+      renderPillarPills();
+      tickMorningItem(3, !!localStorage.getItem(key));   // "named today's pillar"
+    };
+    wrap.appendChild(b);
+  });
+}
+
+function todayPillarId() {
+  return localStorage.getItem('op_pillar_' + isoDate(new Date())) || '';
+}
+
+function renderPillarCards() {
+  var list = document.getElementById('pillars-list');
+  if (!list) return;
+  list.innerHTML = '';
+  PILLARS.forEach(function(p, i) {
+    var el = document.createElement('div');
+    el.className = 'pillar';
+    el.onclick = function() { el.classList.toggle('open'); };
+    el.innerHTML =
+      '<div class="pillar-header">' +
+        '<span class="pillar-num">P' + (i+1) + '</span>' +
+        '<h3>' + esc(p.name.replace(/^The /, '')) + '</h3>' +
+        '<span class="pillar-arrow">&#9660;</span>' +
+      '</div>' +
+      '<div class="pillar-body">' +
+        '<p><strong style="color:#e6edf3;">Declaration:</strong> ' + esc(p.say) + '</p>' +
+        '<p><strong style="color:#e8375a;">Internal belief:</strong> ' + esc(p.belief) + '</p>' +
+      '</div>';
+    list.appendChild(el);
+  });
+}
+
+// ── THE DAILY DEEP-WORK SESSION (Layer 3) ────────────────────────────────────
+var SEG_ROWS = [
+  { id:'session-state-row',  key:'op_sess_state'  },
+  { id:'session-block-row',  key:'op_sess_block'  },
+  { id:'session-stayed-row', key:'op_sess_stayed' }
+];
+
+function initSegRows() {
+  SEG_ROWS.forEach(function(row) {
+    var wrap = document.getElementById(row.id);
+    if (!wrap) return;
+    var sel = localStorage.getItem(row.key) || '';
+    // A stored value with no matching button is a leftover from before the
+    // 2026-09-10 block change (08:30 / 10:15). Drop it rather than leave the row
+    // blank-looking while still writing the old value to the sheet at close-out.
+    var known = false;
+    wrap.querySelectorAll('.seg-btn').forEach(function(btn) {
+      if (btn.getAttribute('data-val') === sel) known = true;
+    });
+    if (sel && !known) { localStorage.removeItem(row.key); sel = ''; }
+    wrap.querySelectorAll('.seg-btn').forEach(function(btn) {
+      var val = btn.getAttribute('data-val');
+      btn.classList.toggle('active', sel === val);
+      btn.onclick = function() {
+        // Read the stored value BEFORE clearing, so a second tap deselects.
+        var wasSel = localStorage.getItem(row.key) === val;
+        wrap.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.remove('active'); });
+        if (wasSel) {
+          localStorage.removeItem(row.key);
+        } else {
+          btn.classList.add('active');
+          localStorage.setItem(row.key, val);
+        }
+      };
+    });
+  });
+}
+
+function collectSession() {
+  return {
+    state:     localStorage.getItem('op_sess_state')  || '',
+    block:     localStorage.getItem('op_sess_block')  || '',
+    stayed:    localStorage.getItem('op_sess_stayed') || '',
+    feeling:   localStorage.getItem('op_session-feeling') || '',
+    saved:     localStorage.getItem('op_session-saved')   || '',
+    stoppedAt: localStorage.getItem('op_session-stopped') || '',
+    track:     ''                                        // pill retired 2026-09-18; column kept
+  };
+}
+
+function saveSessionToSheets() {
+  var s = collectSession();
+  if (!s.state) { showToast('Mark whether the session fired first', 'error'); return; }
+  if (s.state !== 'skipped' && !String(s.saved).trim()) {
+    showToast('No block ends without something saved', 'error');
+    var ta = document.getElementById('session-saved');
+    if (ta) ta.focus();
+    return;
+  }
+  var btn = document.getElementById('session-save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      btn.disabled = false;
+      btn.innerHTML = '&#9745; Log Session to Sheets';
+      var res = {};
+      try { res = JSON.parse(result); } catch(e) {}
+      if (res.success) {
+        logLastLoaded = 0;
+        var now = new Date();
+        document.getElementById('session-saved-msg').textContent =
+          'Logged at ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+        showToast('Session logged');
+      } else {
+        showToast('Save failed: ' + (res.error || 'unknown'), 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '&#9745; Log Session to Sheets';
+      showToast('Error: ' + err.message, 'error');
+    })
+    .saveSession(JSON.stringify(s));
+}
+
+// ── SKILLS BACKLOG (Layer 2 step 6) ──────────────────────────────────────────
+function loadBacklog() {
+  try { return JSON.parse(localStorage.getItem('op_backlog') || '[]'); }
+  catch(e) { return []; }
+}
+
+function renderBacklog() {
+  var list  = document.getElementById('backlog-list');
+  var empty = document.getElementById('backlog-empty');
+  if (!list) return;
+  var items = loadBacklog();
+  list.innerHTML = '';
+  if (items.length === 0) { if (empty) empty.style.display = 'block'; return; }
+  if (empty) empty.style.display = 'none';
+
+  items.forEach(function(text, i) {
+    var row = document.createElement('div');
+    row.className = 'backlog-entry';
+    var span = document.createElement('span');
+    span.className = 'bl-text';
+    span.textContent = text;
+    var del = document.createElement('button');
+    del.className = 'backlog-del';
+    del.innerHTML = '&times;';
+    del.title = 'Remove';
+    del.onclick = function() {
+      var cur = loadBacklog();
+      cur.splice(i, 1);
+      localStorage.setItem('op_backlog', JSON.stringify(cur));
+      renderBacklog();
+      pushBacklog();
+    };
+    row.appendChild(span);
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function addBacklog() {
+  var input = document.getElementById('backlog-input');
+  var text  = String(input.value || '').trim();
+  if (!text) return;
+  var items = loadBacklog();
+  items.push(text);
+  localStorage.setItem('op_backlog', JSON.stringify(items));
+  input.value = '';
+  renderBacklog();
+  pushBacklog();
+  showToast('Logged to the skills backlog — now back to the task');
+}
+
+function pushBacklog() {
+  google.script.run
+    .withSuccessHandler(function() { logLastLoaded = 0; })
+    .withFailureHandler(function() {})
+    .saveBacklog(JSON.stringify(loadBacklog()));
+}
+
+// ── SUNDAY REVIEW (Layer 4) ──────────────────────────────────────────────────
+function renderWeekly(log) {
+  var banner = document.getElementById('weekly-review-banner');
+  var mEl    = document.getElementById('l4-metrics');
+  var wEl    = document.getElementById('l4-warnings');
+  if (!banner || !mEl || !wEl) return;
+
+  var w = weekStats(log);
+  var isSunday = new Date().getDay() === 0;
+  banner.className = 'weekly-banner' + (isSunday && w.started ? ' today' : '');
+  banner.textContent = !w.started
+    ? 'The Daily Deep-Work Session starts ' + LOCK_START + '. Nothing to review yet — and nothing before that date counts as a miss.'
+    : isSunday
+      ? "It's Sunday — read the week's rows against the metrics below, then tune parameters only."
+      : 'Week of ' + w.startStr + ' → ' + w.endStr + '. The full review runs on Sunday.';
+
+  function row(pass, text, val) {
+    var cls = !w.started ? '' : (pass ? 'pass' : 'fail');
+    return '<div class="l4-metric ' + cls + '">' +
+             '<span class="l4-icon">' + (w.started && pass ? '✓' : '·') + '</span>' +
+             '<span class="l4-text">' + text + '</span>' +
+             '<span class="l4-val">' + val + '</span>' +
+           '</div>';
+  }
+  function warn(hit, text, val) {
+    var on = w.started && hit;
+    return '<div class="l4-metric ' + (on ? 'fail' : '') + '">' +
+             '<span class="l4-icon">' + (on ? '⚠' : '·') + '</span>' +
+             '<span class="l4-text">' + text + '</span>' +
+             '<span class="l4-val">' + val + '</span>' +
+           '</div>';
+  }
+
+  mEl.innerHTML =
+    row(w.m1, 'Session fired ≥4/5 weekdays <em style="color:#8b949e;">(relocations count)</em>', w.fired + '/5') +
+    row(w.m2, 'Every fired session has something saved', w.fired ? (w.fired - w.savedMissing) + '/' + w.fired : '—') +
+    row(w.m3, 'The 90-second rule was actually used', w.stayedUsed + '×');
+
+  wEl.innerHTML =
+    warn(w.w1, 'Two or more fully skipped weekdays', w.skippedWeekdays) +
+    warn(w.w2, 'Sessions firing but nothing saved <em style="color:#8b949e;">(going through motions)</em>', w.savedMissing) +
+    warn(w.w3, 'Block quietly shrinking to the floor every day', w.floorDays + '/' + (w.fired || 0));
+}
+
+// ── MODULE ITEM MENU ─────────────────────────────────────────────────────────
+// Fetched only when a module is opened, so 764 items never ride along on the
+// main curriculum payload. These are a menu, not a checklist: their job is to
+// answer "what is the smallest real thing I can do right now" on a bad day.
+var moduleItems = {};
+var TRACKS_WITH_ITEMS = ['IBM', 'AI'];
+var KIND_LABEL  = { v: 'video', r: 'read', a: 'quiz', x: 'task' };
+
+function toggleModuleItems(r, host) {
+  if (host.style.display === 'block') { host.style.display = 'none'; return; }
+  host.style.display = 'block';
+
+  var key = r.track + ':' + r.seq;
+  if (moduleItems[key]) { renderModuleItems(moduleItems[key], host); return; }
+
+  host.innerHTML = '<div class="cur-meta">Loading items&hellip;</div>';
+  google.script.run
+    .withSuccessHandler(function (res) {
+      var list = [];
+      try { list = JSON.parse(res); } catch (e) {}
+      moduleItems[key] = list;
+      renderModuleItems(list, host);
+    })
+    .withFailureHandler(function () {
+      host.innerHTML = '<div class="cur-meta">Could not load items.</div>';
+    })
+    .getModuleItems(JSON.stringify({ track: r.track, seq: r.seq }));
+}
+
+function renderModuleItems(list, host) {
+  if (!list.length) {
+    host.innerHTML = '<div class="cur-meta">No item detail for this one.</div>';
+    return;
+  }
+
+  // The floor: the three shortest things in this module that still count.
+  var floor = list.filter(function (i) { return i.mins > 0 && i.mins <= 10; })
+                  .sort(function (a, b) { return a.mins - b.mins; })
+                  .slice(0, 3);
+
+  var html = '';
+  if (floor.length) {
+    html += '<div class="floor-pick">' +
+              '<div class="floor-pick-label">Bad-day floor &mdash; smallest real actions here</div>' +
+              floor.map(function (i) {
+                return '<div class="floor-item">' + esc(i.title) +
+                       '<span class="floor-min">' + i.mins + ' min</span></div>';
+              }).join('') +
+            '</div>';
+  }
+
+  var total = list.reduce(function (a, i) { return a + i.mins; }, 0);
+  html += '<div class="mod-count">' + list.length + ' items &middot; ' + total + ' min total</div>';
+  html += list.map(function (i) {
+    return '<div class="mod-item">' +
+             '<span class="mod-kind k-' + esc(i.kind) + '">' + (KIND_LABEL[i.kind] || 'item') + '</span>' +
+             '<span class="mod-title">' + esc(i.title) + '</span>' +
+             '<span class="mod-min">' + i.mins + '′</span>' +
+           '</div>';
+  }).join('');
+
+  host.innerHTML = html;
+}
+
+// ── CALISTHENICS — 07:20 ─────────────────────────────────────────────────────
+// Sessions alternate A (push) / B (pull) so each movement pattern gets 48 hours
+// while the habit stays daily. The app decides which one today is, because
+// "what did I do yesterday" is a decision, and 07:20 is where decisions die.
+var CALIS = {
+  A: {
+    name: 'Push',
+    warm: 'Shoulder rolls ×10 · Band horizontal pull-aparts ×15 · Scapula push-ups ×10',
+    levels: [
+      ['Negative push-ups, board chest position — 4 × 5, 3 sec down',
+       'Incline push-ups, hands on desk — 3 × 8',
+       'Plank — 2 × 20 sec'],
+      ['Push-ups, board chest position — 4 × 5',
+       'Incline push-ups — 3 × 10',
+       'Plank — 2 × 30 sec'],
+      ['Push-ups, board chest position — 4 × 8, 2010 tempo',
+       'Close-grip push-ups, board tricep position — 3 × 8',
+       'Ring dips or bench dips — 3 × 5']
+    ],
+    floor: '5 incline push-ups (hands on the desk) + 20-second plank'
+  },
+  B: {
+    name: 'Pull',
+    warm: 'Band overhead pull-aparts ×15 · Band horizontal pull-aparts ×15 · Band pull-downs ×15',
+    levels: [
+      ['Passive hang — 4 × 20 sec',
+       'Ring rows, feet well forward — 3 × 8',
+       'Scapula pull-ups — 3 × 5'],
+      ['Negative pull-ups — 4 × 5, 5 sec down',
+       'Ring rows, lower angle — 3 × 10',
+       'Scapula pull-ups — 3 × 8'],
+      ['Band-assisted pull-ups — 4 × 5',
+       'Ring rows, near horizontal — 3 × 10',
+       'Negative pull-ups — 3 × 5, 10 sec down']
+    ],
+    floor: '2 × 20-second passive hang'
+  }
+};
+
+// Parse "A|full|1" out of a log row.
+function parseCalis(v) {
+  var p = String(v || '').split('|');
+  if (!p[0]) return null;
+  return { session: p[0], version: p[1] || 'full', level: Math.max(1, parseInt(p[2], 10) || 1) };
+}
+
+// Today's session is the opposite of the last one logged. First ever run is A.
+function calisNextSession(log) {
+  var rows = (log || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].date === isoDate(new Date())) continue;   // today doesn't set tomorrow
+    var c = parseCalis(rows[i].calis);
+    if (c) return c.session === 'A' ? 'B' : 'A';
+  }
+  return 'A';
+}
+
+// Level is a setting, not a daily datum: local override first, then the most
+// recent logged level for that session, then 1. Logging persists it.
+function calisLevel(session, log) {
+  var local = parseInt(localStorage.getItem('op_calis_lvl_' + session), 10);
+  if (local >= 1 && local <= 3) return local;
+  var rows = (log || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  for (var i = 0; i < rows.length; i++) {
+    var c = parseCalis(rows[i].calis);
+    if (c && c.session === session) return Math.min(3, c.level);
+  }
+  return 1;
+}
+
+function calisToday(log) {
+  var t = isoDate(new Date());
+  var rows = (log || []);
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].date === t) return parseCalis(rows[i].calis);
+  }
+  return null;
+}
+
+function setCalisLevel(session, delta) {
+  var lvl = Math.min(3, Math.max(1, calisLevel(session, cachedLog) + delta));
+  localStorage.setItem('op_calis_lvl_' + session, lvl);
+  renderCalisthenics();
+}
+
+function renderCalisthenics() {
+  var host = document.getElementById('calis-body');
+  if (!host) return;
+
+  var done    = calisToday(cachedLog);
+  var session = done ? done.session : calisNextSession(cachedLog);
+  var level   = done ? done.level   : calisLevel(session, cachedLog);
+  var def     = CALIS[session];
+  var work    = def.levels[Math.min(level, 3) - 1];
+
+  var head = document.getElementById('calis-head');
+  head.innerHTML = 'Session <strong>' + session + '</strong> &middot; ' + esc(def.name) +
+                   ' &middot; Level ' + level +
+                   (done ? ' <span class="calis-done-tag">' + esc(done.version) + ' logged</span>' : '');
+
+  var html = '<div class="calis-warm"><strong>Warm-up</strong> &middot; ' + esc(def.warm) + '</div>';
+  work.forEach(function (line, i) {
+    html += '<div class="calis-ex"><span class="calis-n">' + (i + 1) + '</span>' + esc(line) + '</div>';
+  });
+  html += '<div class="calis-floor"><strong>Floor</strong> &middot; ' + esc(def.floor) + '</div>';
+  host.innerHTML = html;
+
+  var lvlEl = document.getElementById('calis-level-ctl');
+  lvlEl.innerHTML = '';
+  [['▼', -1], ['▲', 1]].forEach(function (b) {
+    var btn = document.createElement('button');
+    btn.className = 'calis-lvl-btn';
+    btn.innerHTML = b[0];
+    btn.title = b[1] > 0 ? 'Advance a level' : 'Drop a level';
+    btn.onclick = function () { setCalisLevel(session, b[1]); };
+    lvlEl.appendChild(btn);
+  });
+
+  var msg = document.getElementById('calis-msg');
+  msg.textContent = done ? 'Logged today — Session ' + done.session + ', ' + done.version : '';
+}
+
+function logCalisthenics(version) {
+  var done    = calisToday(cachedLog);
+  var session = done ? done.session : calisNextSession(cachedLog);
+  var level   = done ? done.level   : calisLevel(session, cachedLog);
+
+  var btns = document.querySelectorAll('.calis-btn');
+  btns.forEach(function (b) { b.disabled = true; });
+
+  google.script.run
+    .withSuccessHandler(function (result) {
+      btns.forEach(function (b) { b.disabled = false; });
+      var res = {};
+      try { res = JSON.parse(result); } catch (e) {}
+      if (!res.success) { showToast('Save failed: ' + (res.error || 'unknown'), 'error'); return; }
+
+      // reflect it locally so the UI is right before the next getLog
+      var t = isoDate(new Date());
+      var row = null;
+      (cachedLog || []).forEach(function (e) { if (e.date === t) row = e; });
+      if (!row) { row = { date: t, commitments: [], session: {} }; (cachedLog = cachedLog || []).unshift(row); }
+      row.calis = res.value;
+      localStorage.setItem('op_calis_lvl_' + session, level);
+      logLastLoaded = 0;
+
+      tickMorningCalisthenics();
+      renderCalisthenics();
+      renderScore();
+      showToast(version === 'floor' ? 'Floor logged — it counts' : 'Calisthenics logged');
+    })
+    .withFailureHandler(function (err) {
+      btns.forEach(function (b) { b.disabled = false; });
+      showToast('Error: ' + err.message, 'error');
+    })
+    .saveCalisthenics(JSON.stringify({ session: session, version: version, level: level }));
+}
+
+// Boot-sequence steps the app can witness tick themselves: calisthenics when
+// it is logged (index 1), the pillar when one is picked (index 3).
+function tickMorningItem(idx, on) {
+  var items = document.querySelectorAll('#morning .check-item');
+  if (!items[idx]) return;
+  items[idx].classList.toggle('checked', !!on);
+  saveChecks();
+}
+function tickMorningCalisthenics() { tickMorningItem(1, true); }
+
+// ── SCOREBOARD ───────────────────────────────────────────────────────────────
+// T14's requirement, literally: a number that goes up tonight, and that still
+// pays on a bad day. Every counter here is cumulative — none of them reset on a
+// miss. The streak is deliberately NOT the headline; a streak is a thing you can
+// lose, and "on your worst days the system loses to the easier option by design" is the
+// failure mode the scoreboard exists to avoid.
+
+function _isoParse(iso) {
+  var p = String(iso).split('-');
+  return new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
+}
+
+// Monday-start week bucket, as an ISO date for that Monday.
+function _weekKey(iso) {
+  var d = _isoParse(iso);
+  var dow = (d.getDay() + 6) % 7;         // Mon = 0
+  d.setDate(d.getDate() - dow);
+  return isoDate(d);
+}
+
+function _dayCounted(e) {
+  var s = (e && e.session) || {};
+  if (s.state === 'full' || s.state === 'relocated' || s.state === 'floor') return true;
+  return !!(e && (e.commitments || []).some(function (c) {
+    return c.status === 'D' || c.status === 'M';
+  }));
+}
+
+function computeScore(log, cur) {
+  log = log || [];
+  cur = cur || [];
+
+  var daysBanked = 0, saved = 0, stayed = 0, calis = 0;
+  var activeDates = [];
+  var wkSessions = {};
+
+  log.forEach(function (e) {
+    if (!e.date || e.date < LOCK_START) return;   // nothing before the first run counts
+    var s = e.session || {};
+    if (_dayCounted(e)) { daysBanked++; activeDates.push(e.date); }
+    if (String(s.saved || '').trim()) saved++;
+    if (s.stayed === 'used') stayed++;
+    if (String(e.calis || '').trim()) calis++;
+    if (s.state === 'full' || s.state === 'relocated' || s.state === 'floor') {
+      var k = _weekKey(e.date);
+      wkSessions[k] = (wkSessions[k] || 0) + 1;
+    }
+  });
+
+  // Curriculum: CCP is measured in pages, course tracks in hours.
+  var pagesDone = 0, pagesAll = 0, hoursDone = 0, hoursAll = 0;
+  var itemsDone = 0, itemsAll = 0, wkItems = {};
+  cur.forEach(function (r) {
+    var pages = r.track === 'CCP';
+    if (pages) { pagesAll += r.pages; if (r.done) pagesDone += r.pages; }
+    else       { hoursAll += r.pages; if (r.done) hoursDone += r.pages; }
+    itemsAll++;
+    if (r.done) {
+      itemsDone++;
+      if (r.doneOn) {
+        var k = _weekKey(r.doneOn);
+        wkItems[k] = (wkItems[k] || 0) + 1;
+      }
+    }
+  });
+
+  // Longest run of consecutive calendar days with something on the board.
+  activeDates.sort();
+  var best = 0, run = 0, prev = null;
+  activeDates.forEach(function (d) {
+    if (prev) {
+      var gap = Math.round((_isoParse(d) - _isoParse(prev)) / 86400000);
+      run = (gap === 1) ? run + 1 : 1;
+    } else {
+      run = 1;
+    }
+    if (run > best) best = run;
+    prev = d;
+  });
+
+  function maxOf(o) {
+    var m = 0;
+    Object.keys(o).forEach(function (k) { if (o[k] > m) m = o[k]; });
+    return m;
+  }
+
+  // Day N of the 30-day evidence window.
+  var start = _isoParse(LOCK_START);
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var day = Math.floor((today - start) / 86400000) + 1;
+
+  return {
+    daysBanked: daysBanked,
+    saved: saved,
+    stayed: stayed,
+    calis: calis,
+    pagesDone: pagesDone, pagesAll: pagesAll,
+    hoursDone: hoursDone, hoursAll: hoursAll,
+    itemsDone: itemsDone, itemsAll: itemsAll,
+    bestStreak: best,
+    currentStreak: calcStreak(log),
+    bestWeekSessions: maxOf(wkSessions),
+    bestWeekItems: maxOf(wkItems),
+    windowDay: day
+  };
+}
+
+function renderScore() {
+  var grid = document.getElementById('score-grid');
+  if (!grid) return;
+  var v = computeScore(cachedLog, curriculum);
+
+  function tile(num, of, label, lead) {
+    return '<div class="score-tile' + (lead ? ' lead' : '') + '">' +
+             '<div class="score-num">' + num +
+               (of ? '<span class="score-of"> / ' + of + '</span>' : '') + '</div>' +
+             '<div class="score-label">' + label + '</div>' +
+           '</div>';
+  }
+
+  grid.innerHTML =
+    tile(v.daysBanked, '', 'Days banked', true) +
+    tile(v.saved, '', 'Things saved') +
+    tile(v.pagesDone, v.pagesAll, 'CCP pages read') +
+    tile(v.hoursDone, v.hoursAll, 'Course hours done') +
+    tile(v.stayed, '', '90-second rule used') +
+    tile(v.itemsDone, v.itemsAll, 'Curriculum items') +
+    '<div class="score-tile wide"><div class="score-num">' + v.calis +
+      '</div><div class="score-label">Calisthenics mornings</div></div>';
+
+  var bests = document.getElementById('score-bests');
+  function best(val, label, sub) {
+    return '<div class="best-row">' +
+             '<div class="best-val">' + val + '</div>' +
+             '<div class="best-label">' + label +
+               (sub ? '<div class="best-sub">' + sub + '</div>' : '') + '</div>' +
+           '</div>';
+  }
+  bests.innerHTML =
+    best(v.bestStreak, 'Longest streak',
+         v.currentStreak >= v.bestStreak && v.bestStreak > 0
+           ? 'Current run is your best — keep it'
+           : 'Current run: ' + v.currentStreak) +
+    best(v.bestWeekSessions, 'Best week — sessions fired', 'Out of 5 weekdays') +
+    best(v.bestWeekItems, 'Best week — curriculum items', 'Chapters, subsections or modules cleared');
+
+  var win = document.getElementById('score-window');
+  var bar = document.getElementById('score-window-bar');
+  if (v.windowDay < 1) {
+    win.textContent = 'Window opens ' + LOCK_START + ' — ' + (1 - v.windowDay) + ' day(s) to go';
+    bar.style.width = '0%';
+  } else {
+    var d = Math.min(v.windowDay, 30);
+    win.textContent = (v.windowDay <= 30 ? 'Day ' + v.windowDay + ' of 30' : 'Window complete') +
+                      ' · ' + v.daysBanked + ' day(s) banked';
+    bar.style.width = Math.round(d / 30 * 100) + '%';
+    bar.style.background = v.daysBanked >= d * 0.8 ? '#1a7f37'
+                         : v.daysBanked >= d * 0.5 ? '#9a6700' : '#8c1c2a';
+  }
+}
+
+function toggleHistory() {
+  var body  = document.getElementById('history-body');
+  var arrow = document.getElementById('history-arrow');
+  var open  = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  arrow.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) loadLog();
+}
+
+// ── CURRICULUM — what is done, what is left, what is next ────────────────────
+// Answers the question T02 Layer 1 assumes is already answered: which task.
+var curriculum = null;
+var curLoaded  = 0;
+var curTrack   = localStorage.getItem('op_cur_track') || 'CCP';
+var curShowAll = false;
+
+function loadCurriculum(force) {
+  if (!force && curriculum && Date.now() - curLoaded < 60000) { renderCurriculum(); return; }
+  // Paint from the last known copy first so the phone is never blank while the
+  // round-trip runs, and still shows something with no connection at all.
+  if (!curriculum) {
+    try {
+      var cached = localStorage.getItem('op_curriculum');
+      if (cached) { curriculum = JSON.parse(cached); renderCurriculum(); }
+    } catch(e) {}
+  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      try {
+        curriculum = JSON.parse(result);
+        curLoaded  = Date.now();
+        localStorage.setItem('op_curriculum', result);
+      } catch(e) {}
+      renderCurriculum();
+      renderScore();
+    })
+    .withFailureHandler(function() { renderCurriculum(); })
+    .getCurriculum();
+}
+
+// The size column means pages for a book-based track and hours for a
+// course-based one. Same number, different unit.
+function curUnit(t)     { return t === 'CCP' ? 'pp'    : 'h'; }
+function curUnitLong(t) { return t === 'CCP' ? 'pages' : 'hours'; }
+
+// Some tracks carry two separate bodies of work that deserve their own lists.
+// CCP is one book finished and being revised (TCM) plus one in first pass (SK);
+// AI is a Python course plus the AI Engineering curriculum. The first entry is
+// the default, and the last one doubles as the catch-all.
+var TRACK_BOOKS = {
+  CCP: [
+    { key:'SK',  label:'SK \u2014 first pass',
+      test: function(g) { return g.indexOf('SK ') === 0; } },
+    { key:'TCM', label:'TCM \u2014 revision', badge:'revision',
+      test: function() { return true; } }
+  ],
+  AI: [
+    { key:'PY4E',  label:'Python for Everybody',
+      test: function(g) { return g.indexOf('PY4E') === 0; } },
+    { key:'AIEFS', label:'AI Eng From Scratch',
+      test: function() { return true; } }
+  ]
+};
+
+function trackBooks(track) { return TRACK_BOOKS[track] || null; }
+
+function curBookDef(r) {
+  var books = trackBooks(r.track);
+  if (!books) return null;
+  var g = String(r.group || '');
+  for (var i = 0; i < books.length; i++) if (books[i].test(g)) return books[i];
+  return books[books.length - 1];
+}
+function curBook(r) {
+  var b = curBookDef(r);
+  return b ? b.key : null;
+}
+
+// Remembered per track, so choosing SK for CCP does not move the AI list.
+var curBookSel = {};
+(function readBookSel() {
+  var raw = localStorage.getItem('op_cur_book');
+  if (!raw) return;
+  try {
+    var v = JSON.parse(raw);
+    curBookSel = (v && typeof v === 'object') ? v : {};
+  } catch(e) {
+    curBookSel = { CCP: raw };   // an older build stored CCP's choice as a bare string
+  }
+})();
+
+function selectedBook(track) {
+  var books = trackBooks(track);
+  if (!books) return null;
+  var sel = curBookSel[track];
+  for (var i = 0; i < books.length; i++) if (books[i].key === sel) return sel;
+  return books[0].key;
+}
+
+function curRows() {
+  var rows = (curriculum || []).filter(function(r) { return r.track === curTrack; });
+  if (trackBooks(curTrack)) {
+    var sel = selectedBook(curTrack);
+    rows = rows.filter(function(r) { return curBook(r) === sel; });
+  }
+  return rows;
+}
+
+function toggleCurriculumAll() { curShowAll = !curShowAll; renderCurriculum(); }
+
+function renderCurriculum() {
+  var pills = document.getElementById('cur-track-pills');
+  if (!pills) return;
+  var all    = curriculum || [];
+  var empty  = document.getElementById('cur-empty');
+  var toggle = document.getElementById('cur-toggle');
+
+  var tracks = [];
+  all.forEach(function(r) { if (tracks.indexOf(r.track) < 0) tracks.push(r.track); });
+  if (tracks.length && tracks.indexOf(curTrack) < 0) curTrack = tracks[0];
+
+  pills.innerHTML = '';
+  tracks.forEach(function(t) {
+    var b = document.createElement('button');
+    b.className = 'track-pill' + (t === curTrack ? ' active' : '');
+    b.textContent = t;
+    b.onclick = function() {
+      curTrack = t;
+      localStorage.setItem('op_cur_track', t);
+      renderCurriculum();
+    };
+    pills.appendChild(b);
+  });
+
+  var books = document.getElementById('cur-book-pills');
+  var defs  = trackBooks(curTrack);
+  if (books) {
+    books.innerHTML = '';
+    books.style.display = defs ? '' : 'none';
+    if (defs) {
+      var sel = selectedBook(curTrack);
+      defs.forEach(function(b) {
+        var n = all.filter(function(r) {
+          return r.track === curTrack && curBook(r) === b.key;
+        }).length;
+        var btn = document.createElement('button');
+        btn.className = 'track-pill' + (sel === b.key ? ' active' : '');
+        btn.textContent = b.label + ' (' + n + ')';
+        btn.onclick = function() {
+          curBookSel[curTrack] = b.key;
+          try { localStorage.setItem('op_cur_book', JSON.stringify(curBookSel)); } catch(e) {}
+          renderCurriculum();
+        };
+        books.appendChild(btn);
+      });
+    }
+  }
+
+  var rows = curRows();
+  if (empty)  empty.style.display  = rows.length ? 'none' : 'block';
+  if (toggle) toggle.style.display = rows.length ? '' : 'none';
+
+  var done      = rows.filter(function(r) { return r.done; });
+  var pagesAll  = rows.reduce(function(a, r) { return a + r.pages; }, 0);
+  var pagesDone = done.reduce(function(a, r) { return a + r.pages; }, 0);
+  var pct       = rows.length ? Math.round(done.length / rows.length * 100) : 0;
+
+  document.getElementById('cur-progress').innerHTML =
+    esc(curTrack + (trackBooks(curTrack) ? ' \u00b7 ' + selectedBook(curTrack) : '')) +
+    ' &mdash; <strong>' + done.length + ' / ' + rows.length + '</strong> done' +
+    '<span class="cur-sub"> &middot; ' + pagesDone + ' / ' + pagesAll + ' ' + curUnitLong(curTrack) + ' &middot; ' + pct + '%</span>';
+
+  var bar = document.getElementById('cur-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = pct >= 80 ? '#1a7f37' : pct >= 40 ? '#9a6700' : '#e8375a';
+
+  var nextEl = document.getElementById('cur-next');
+  nextEl.innerHTML = '';
+  var next = rows.filter(function(r) { return !r.done; }).slice(0, 3);
+  if (!next.length && rows.length) {
+    nextEl.innerHTML = '<div class="cur-meta" style="padding:12px 0;">Every item is done. Nothing left in this track.</div>';
+  } else {
+    next.forEach(function(r, i) { nextEl.appendChild(curItemEl(r, i === 0 ? 'next' : 'soon')); });
+  }
+
+  var allEl = document.getElementById('cur-all');
+  allEl.style.display = curShowAll ? 'block' : 'none';
+  if (toggle) toggle.innerHTML = curShowAll ? 'Hide list &#9650;' : 'Show all &#9660;';
+  if (!curShowAll) { allEl.innerHTML = ''; return; }
+
+  allEl.innerHTML = '';
+  var lastGroup = null, lastChapter = null;
+  rows.forEach(function(r) {
+    if (r.group !== lastGroup) {
+      var g = document.createElement('div');
+      g.className = 'cur-group';
+      g.textContent = r.group;
+      allEl.appendChild(g);
+      lastGroup = r.group; lastChapter = null;
+    }
+    if (r.item && r.chapter !== lastChapter) {
+      var c = document.createElement('div');
+      c.className = 'cur-chapter';
+      c.textContent = r.chapter;
+      allEl.appendChild(c);
+      lastChapter = r.chapter;
+    }
+    allEl.appendChild(curItemEl(r, 'list'));
+  });
+}
+
+// mode: 'next' (the one to do) | 'soon' (the two after) | 'list' (full list)
+function curItemEl(r, mode) {
+  var el = document.createElement('div');
+  el.className = 'cur-item' + (r.done ? ' done' : '');
+
+  var box = document.createElement('div');
+  box.className = 'cur-box';
+  box.onclick = function() { setCurriculumItem(r.seq, !r.done); };
+
+  var body = document.createElement('div');
+  body.className = 'cur-body';
+
+  var name = document.createElement('div');
+  name.className = 'cur-name';
+  var bdef = curBookDef(r);
+  if (bdef && bdef.badge) {
+    var rev = document.createElement('span');
+    rev.className = 'rev-badge';
+    rev.textContent = bdef.badge;
+    name.appendChild(rev);
+  }
+  name.appendChild(document.createTextNode(r.item || r.chapter));
+
+  var meta = document.createElement('div');
+  meta.className = 'cur-meta';
+  var bits = [];
+  if (r.item)             bits.push(r.chapter);
+  if (r.pages)            bits.push(r.pages + curUnit(r.track));
+  if (r.startPage)        bits.push('p.' + r.startPage);
+  if (r.done && r.doneOn) bits.push('done ' + r.doneOn);
+  meta.textContent = bits.join('  ·  ');
+
+  body.appendChild(name);
+  body.appendChild(meta);
+
+  if (!r.done && mode !== 'soon') {
+    var acts = document.createElement('div');
+    acts.className = 'cur-actions';
+    if (mode === 'next') {
+      var t = document.createElement('button');
+      t.className = 'cur-btn primary';
+      t.innerHTML = '&rarr; tomorrow';
+      t.onclick = function() { curriculumToTomorrow(r); };
+      acts.appendChild(t);
+    }
+    var u = document.createElement('button');
+    u.className = 'cur-btn';
+    u.textContent = 'Mark all up to here';
+    u.onclick = function() { markUpTo(r.seq); };
+    acts.appendChild(u);
+    body.appendChild(acts);
+  }
+
+  // Modules with item detail get a menu, so the bad-day floor is pickable.
+  // Kept in step with ITEM_STORE in curriculum_Code.js.
+  if (TRACKS_WITH_ITEMS.indexOf(r.track) >= 0) {
+    var host = document.createElement('div');
+    host.className = 'cur-items';
+    host.style.display = 'none';
+
+    var ib = document.createElement('button');
+    ib.className = 'cur-btn';
+    ib.innerHTML = '&#9662; items';
+    ib.onclick = function() { toggleModuleItems(r, host); };
+
+    if (!body.querySelector('.cur-actions')) {
+      var row = document.createElement('div');
+      row.className = 'cur-actions';
+      body.appendChild(row);
+    }
+    body.querySelector('.cur-actions').appendChild(ib);
+    body.appendChild(host);
+  }
+
+  el.appendChild(box);
+  el.appendChild(body);
+  return el;
+}
+
+function setCurriculumItem(seq, done) {
+  applyCurriculumLocal([seq], done);
+  pushCurriculum([seq], done);
+}
+
+// The catch-up action: 39 days of this plan are already complete, and ticking
+// them one at a time would be miserable enough to skip entirely.
+function markUpTo(seq) {
+  var seqs = curRows()
+    .filter(function(r) { return r.seq <= seq && !r.done; })
+    .map(function(r) { return r.seq; });
+  if (!seqs.length) { showToast('Nothing earlier left to mark'); return; }
+  if (!confirm('Mark ' + seqs.length + ' item(s) up to here as done?')) return;
+  applyCurriculumLocal(seqs, true);
+  pushCurriculum(seqs, true);
+}
+
+// Optimistic: update locally and repaint at once, then reconcile with the
+// server. A failed write reloads from the sheet rather than leaving a lie.
+function applyCurriculumLocal(seqs, done) {
+  var today = isoDate(new Date());
+  (curriculum || []).forEach(function(r) {
+    if (r.track === curTrack && seqs.indexOf(r.seq) >= 0) {
+      r.done   = done;
+      r.doneOn = done ? today : '';
+    }
+  });
+  try { localStorage.setItem('op_curriculum', JSON.stringify(curriculum || [])); } catch(e) {}
+  renderCurriculum();
+}
+
+function pushCurriculum(seqs, done) {
+  google.script.run
+    .withSuccessHandler(function(result) {
+      var res = {};
+      try { res = JSON.parse(result); } catch(e) {}
+      if (!res.success) {
+        showToast('Save failed — reloading', 'error');
+        loadCurriculum(true);
+      }
+    })
+    .withFailureHandler(function() {
+      showToast('Could not save — reloading', 'error');
+      loadCurriculum(true);
+    })
+    .setCurriculumDone(JSON.stringify({ track: curTrack, seqs: seqs, done: done }));
+}
+
+// The payoff: one tap puts the next item into tomorrow's plan, which clearDay()
+// already carries into the next day's commitments.
+function curriculumToTomorrow(r) {
+  var text = (r.item || r.chapter);
+  if (r.pages) text += ' (' + r.pages + curUnit(r.track) + (r.startPage ? ', p.' + r.startPage : '') + ')';
+
+  var cur   = localStorage.getItem('op_tomorrow-plan') || '';
+  var lines = cur.split('\n').filter(function(l) { return l.trim().length > 0; });
+  if (lines.join('\n').indexOf(text) >= 0) { showToast('Already in tomorrow’s tasks'); return; }
+  lines.push(text);
+
+  var joined = lines.join('\n');
+  localStorage.setItem('op_tomorrow-plan', joined);
+  var el = document.getElementById('tomorrow-plan');
+  if (el) { el.value = joined; autoGrow(el); }
+  showToast('Added to tomorrow’s tasks');
+}
+
+// ── FIREWALL TAB INIT ─────────────────────────────────────────────────────────
+function initFirewall() {
+  renderPillarCards();
+  renderRisks();
+  renderFirewallLog();
+  renderLockStatus();
+  if (cachedLog) {
+    renderChain(cachedLog);
+    renderFailureProtocol(cachedLog);
+    renderRungs(cachedLog);
+  } else if (logLoading) {
+    chainPending = true;
+  } else {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        try {
+          cachedLog = JSON.parse(result);
+          renderChain(cachedLog);
+          renderFailureProtocol(cachedLog);
+          renderRungs(cachedLog);
+          updateStreak(cachedLog);
+          updateWeeklyRate(cachedLog);
+        } catch(e) {}
+      })
+      .withFailureHandler(function() {})
+      .getLog();
+  }
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+renderDeclarations();
+renderPillarPills();
+renderCalisthenics();
+renderPillarCards();
+initSegRows();
+renderBacklog();
+renderTodayTask();
+renderEveningCommits();
+renderEveningChecks();
+renderLockStatus();
+
+// ── MOBILE: AUTO-GROW TEXTAREAS ──────────────────────────────────────────────
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+document.querySelectorAll('textarea').forEach(function(ta) {
+  ta.addEventListener('input', function() { autoGrow(ta); });
+  if (ta.value) autoGrow(ta);
+});
+
+// ── MOBILE: SCROLL FOCUSED INPUT INTO VIEW ───────────────────────────────────
+document.addEventListener('focusin', function(e) {
+  var el = e.target;
+  if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+    setTimeout(function() {
+      el.scrollIntoView({ behavior:'smooth', block:'center' });
+    }, 350);
+  }
+});
+</script>
+</body>
+</html>

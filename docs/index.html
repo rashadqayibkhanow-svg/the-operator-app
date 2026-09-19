@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Operator</title>
+
+<!-- These are the whole point of this file. iOS reads them from the TOP-LEVEL
+     document only — inside the Apps Script iframe they are ignored, which is
+     why /exec added to the home screen still shows Safari chrome. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Operator">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+
+<style>
+  html, body {
+    margin:0; padding:0; height:100%;
+    background:#0d1117;
+    overflow:hidden;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+
+  /* The frame is inset by the safe areas, because env() resolves to 0 inside
+     the Apps Script iframe — the wrapper has to reserve the notch and the
+     home indicator on the app's behalf. Background matches so it looks seamless. */
+  #frame {
+    position:fixed;
+    top:env(safe-area-inset-top);
+    right:env(safe-area-inset-right);
+    bottom:env(safe-area-inset-bottom);
+    left:env(safe-area-inset-left);
+    width:auto; height:auto;
+    border:0; display:block;
+    background:#0d1117;
+  }
+
+  #splash {
+    position:fixed; inset:0; z-index:10;
+    background:#0d1117; color:#e6edf3;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    transition:opacity .35s ease;
+    padding:24px; text-align:center;
+  }
+  #splash.hide { opacity:0; pointer-events:none; }
+
+  .mark {
+    width:64px; height:64px; border-radius:50%;
+    border:5px solid #e8375a;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .mark::after { content:''; width:18px; height:18px; border-radius:50%; background:#e8375a; }
+
+  .brand { font-size:11px; letter-spacing:4px; text-transform:uppercase; color:#e8375a; font-weight:700; }
+  .name  { font-size:24px; font-weight:800; letter-spacing:0.5px; }
+  .hint  { font-size:13px; color:#8b949e; line-height:1.6; max-width:300px; }
+
+  #fallback { display:none; }
+  #fallback a {
+    display:inline-block; margin-top:14px; padding:14px 22px;
+    background:#e8375a; color:#fff; text-decoration:none;
+    border-radius:12px; font-size:15px; font-weight:700;
+  }
+  .spin {
+    width:18px; height:18px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.25); border-top-color:#e8375a;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="mark"></div>
+  <div class="brand">Personal OS</div>
+  <div class="name">THE OPERATOR</div>
+  <div class="spin" id="spin"></div>
+
+  <div id="fallback">
+    <div class="hint">
+      The app couldn't load inside this wrapper. That usually means Safari blocked
+      the Google session cookie because the web app's access is set to
+      <strong>Only myself</strong>.
+    </div>
+    <a href="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec">
+      Open directly instead
+    </a>
+  </div>
+</div>
+
+<iframe
+  id="frame"
+  src="https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"
+  allow="clipboard-write; clipboard-read"
+  referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+<script>
+  var splash   = document.getElementById('splash');
+  var fallback = document.getElementById('fallback');
+  var spin     = document.getElementById('spin');
+  var frame    = document.getElementById('frame');
+  var loaded   = false;
+
+  frame.addEventListener('load', function () {
+    loaded = true;
+    // Give the inner app a beat to paint before revealing it.
+    setTimeout(function () { splash.classList.add('hide'); }, 400);
+  });
+
+  // Cross-origin means we cannot inspect the frame to tell "loaded the app"
+  // from "loaded a Google error page" — so offer the escape hatch on a timer.
+  setTimeout(function () {
+    if (loaded) return;
+    spin.style.display = 'none';
+    fallback.style.display = 'block';
+  }, 9000);
+</script>
+</body>
+</html>
